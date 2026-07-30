@@ -1,0 +1,29 @@
+[Unit]
+Description=OpenCaddie golf computer
+After=network-manager.service gpsd.service
+Wants=network-manager.service gpsd.service
+
+[Service]
+Type=simple
+User=opencaddie
+Group=opencaddie
+SupplementaryGroups=video render input dialout
+Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QPA_EGLFS_INTEGRATION=eglfs_kms
+Environment=QT_LOGGING_RULES=*.debug=false
+ExecStart=/usr/bin/OpenCaddie --device --data-dir /var/lib/opencaddie
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/var/lib/opencaddie /sys/class/backlight
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
+

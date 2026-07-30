@@ -1,0 +1,10 @@
+# OpenCaddie Raspberry Pi 5 / Waveshare DSI prototype
+dtoverlay=vc4-kms-v3d
+disable_fw_kms_setup=1
+max_framebuffers=2
+enable_uart=1
+dtparam=uart0=on
+
+# Display/touch rotation is hardware-installation specific. Validate both before
+# adding panel orientation or touchscreen calibration here.
+

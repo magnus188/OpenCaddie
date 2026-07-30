@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "2",
+  "course": {
+    "name": "OpenCaddie Demo Course",
+    "slug": "opencaddie-demo",
+    "location": { "lat": 59.95, "lng": 10.62, "country": "Norway" },
+    "version": "bundled-v1",
+    "updatedAt": "2026-07-29T00:00:00.000Z"
+  },
+  "scope": "course",
+  "distanceUnit": "meters",
+  "model": {
+    "course": {
+      "name": "OpenCaddie Demo Course",
+      "slug": "opencaddie-demo"
+    },
+    "distanceUnit": "meters",
+    "holes": [
+      {
+        "number": 1,
+        "par": 4,
+        "handicap": 7,
+        "viewBox": [-88, -208, 176, 416],
+        "projection": {
+          "type": "local-equirectangular",
+          "origin": { "lng": 10.62, "lat": 59.95 },
+          "earthRadiusMeters": 6378137,
+          "rotationRadians": 0
+        },
+        "features": [
+          {
+            "kind": "wood",
+            "d": "M -78 -190 L -42 -196 L -36 180 L -80 194 Z M 42 -196 L 78 -190 L 80 194 L 36 180 Z",
+            "closed": true
+          },
+          {
+            "kind": "rough",
+            "d": "M -46 -180 C -58 -125 -50 -62 -44 -10 C -38 54 -50 112 -38 176 L 38 176 C 50 112 38 54 44 -10 C 50 -62 58 -125 46 -180 Z",
+            "closed": true
+          },
+          {
+            "kind": "fairway",
+            "d": "M -25 145 C -20 92 -34 38 -22 -5 C -10 -48 -28 -92 -17 -140 C -6 -158 8 -158 18 -140 C 28 -92 10 -48 22 -5 C 34 38 20 92 25 145 Z",
+            "closed": true
+          },
+          {
+            "kind": "water",
+            "d": "M -39 35 C -22 25 9 24 35 36 L 31 53 C 8 43 -21 45 -40 55 Z",
+            "closed": true
+          },
+          {
+            "kind": "bunker",
+            "d": "M -32 -115 C -25 -129 -15 -130 -11 -116 C -15 -101 -27 -99 -32 -115 Z",
+            "closed": true
+          },
+          {
+            "kind": "bunker",
+            "d": "M 16 -102 C 25 -115 35 -111 34 -96 C 29 -84 19 -87 16 -102 Z",
+            "closed": true
+          },
+          {
+            "kind": "green",
+            "d": "M -23 -164 C -16 -185 18 -187 27 -166 C 30 -145 14 -133 -7 -136 C -25 -138 -32 -149 -23 -164 Z",
+            "closed": true
+          },
+          {
+            "kind": "tee",
+            "d": "M -18 146 L 18 146 L 20 173 L -20 173 Z",
+            "closed": true,
+            "label": "Yellow"
+          },
+          {
+            "kind": "path",
+            "d": "M 42 178 C 48 90 40 12 52 -82 C 55 -128 48 -161 35 -186",
+            "closed": false
+          },
+          {
+            "kind": "hole_line",
+            "d": "M 0 158 C -7 94 8 44 0 -2 C -8 -53 8 -106 2 -158",
+            "closed": false
+          },
+          {
+            "kind": "pin",
+            "d": "M -1 -159 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0 Z",
+            "closed": true,
+            "anchor": { "x": 0, "y": -159 }
+          }
+        ],
+        "labels": [],
+        "lengthMeters": 317,
+        "tees": [
+          { "label": "Yellow", "meters": 317, "yards": 347, "distance": 317, "unit": "meters" }
+        ],
+        "clip": "M -46 -180 C -58 -125 -50 -62 -44 -10 C -38 54 -50 112 -38 176 L 38 176 C 50 112 38 54 44 -10 C 50 -62 58 -125 46 -180 Z",
+        "arcs": [],
+        "arcsByUnit": { "meters": [], "yards": [] }
+      }
+    ],
+    "unassignedCount": 0
+  },
+  "attribution": "© OpenStreetMap contributors (ODbL)"
+}
+

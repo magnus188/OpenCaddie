@@ -1,0 +1,23 @@
+name: Bug report
+description: Report reproducible OpenCaddie behavior
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Revision and hardware
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Sanitized logs
+      description: Remove credentials, private coordinates, and personal rounds.
+

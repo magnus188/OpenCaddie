@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure domain-only build
+        run: cmake -S . -B build/core -G Ninja -DOPENCADDIE_BUILD_UI=OFF -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build/core --parallel
+      - name: Test
+        run: ctest --test-dir build/core --output-on-failure
+
+  qt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt 6.8 LTS
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          cache: true
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build clang-tidy
+      - name: Configure
+        run: >
+          cmake -S . -B build/desktop -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+      - name: Build
+        run: cmake --build build/desktop --parallel
+      - name: Test
+        run: ctest --test-dir build/desktop --output-on-failure
+      - name: QML lint
+        run: cmake --build build/desktop --target opencaddie_qmllint
+      - name: Verify translations
+        run: |
+          cmake --build build/desktop --target update_translations
+          ! grep -q 'type="unfinished"' src/ui/i18n/opencaddie_nb.ts
+          cmake --build build/desktop --target release_translations
+          git diff --exit-code -- src/ui/i18n
+
+  arm64-package:
+    runs-on: ubuntu-26.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native ARM64 Qt and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ qt6-base-dev qt6-declarative-dev \
+            qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools libqt6sql6-sqlite
+      - name: Configure native ARM64 release
+        run: >
+          cmake -S . -B build/release -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=/usr
+          -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -ffile-prefix-map=${{ github.workspace }}=."
+      - name: Build and test
+        run: |
+          cmake --build build/release --parallel
+          ctest --test-dir build/release --output-on-failure
+          cmake --build build/release --target opencaddie_qmllint release_translations
+      - name: Build reproducible packages
+        working-directory: build/release
+        run: |
+          export SOURCE_DATE_EPOCH="$(git -C ../.. log -1 --pretty=%ct)"
+          cpack -G TGZ
+          first="$(find . -maxdepth 1 -name 'opencaddie-*.tar.gz' -print -quit)"
+          cp "$first" /tmp/opencaddie-first.tar.gz
+          rm "$first"
+          cpack -G TGZ
+          second="$(find . -maxdepth 1 -name 'opencaddie-*.tar.gz' -print -quit)"
+          cmp /tmp/opencaddie-first.tar.gz "$second"
+          cpack -G DEB
+          sha256sum opencaddie-* > SHA256SUMS
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: build/release/_CPack_Packages
+          output-file: build/release/opencaddie-arm64.spdx.json
+          upload-artifact: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opencaddie-arm64
+          path: |
+            build/release/opencaddie-*
+            build/release/SHA256SUMS
+

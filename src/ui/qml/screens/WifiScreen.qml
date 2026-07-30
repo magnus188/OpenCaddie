@@ -1,0 +1,190 @@
+import QtQuick
+import QtQuick.Controls
+import OpenCaddie
+
+Item {
+    id: root
+    anchors.fill: parent
+    property string selectedSsid: ""
+    property bool hiddenNetwork: false
+    property var keyboardTarget: null
+
+    TopBar {
+        id: header
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        title: qsTr("Wi-Fi")
+        subtitle: network.connectedSsid.length > 0
+                  ? qsTr("Connected to %1").arg(network.connectedSsid)
+                  : qsTr("Not connected")
+        onBack: app.screen = "SettingsScreen"
+    }
+
+    AppButton {
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        anchors.verticalCenter: header.verticalCenter
+        text: network.scanning ? qsTr("Scanning…") : qsTr("Scan")
+        compact: true
+        enabled: !network.scanning
+        onClicked: network.scan()
+    }
+
+    Row {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: header.bottom
+        anchors.bottom: keyboard.top
+        anchors.margins: 16
+        anchors.topMargin: 4
+        anchors.bottomMargin: keyboard.visible ? 8 : 16
+        spacing: 14
+
+        SectionCard {
+            width: 374
+            height: parent.height
+            title: qsTr("Available networks")
+            ListView {
+                anchors.fill: parent
+                model: network.networks
+                clip: true
+                spacing: 6
+                delegate: Rectangle {
+                    required property var modelData
+                    width: ListView.view.width
+                    height: 55
+                    radius: Theme.radius
+                    color: root.selectedSsid === modelData.ssid
+                           ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
+                           : Theme.surfaceRaised
+                    border.width: 1
+                    border.color: root.selectedSsid === modelData.ssid
+                                  ? Theme.fairway : Theme.border
+                    Column {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 10
+                        Text {
+                            text: modelData.ssid
+                            color: Theme.text
+                            font.family: "Inter"
+                            font.weight: Font.DemiBold
+                            font.pixelSize: Theme.px(14)
+                        }
+                        Text {
+                            text: modelData.security
+                            color: Theme.textMuted
+                            font.family: "Inter"
+                            font.pixelSize: Theme.px(10)
+                        }
+                    }
+                    Text {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.signal + "%"
+                        color: modelData.signal >= 60 ? Theme.fairway : Theme.amber
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(12)
+                    }
+                    TapHandler {
+                        onTapped: {
+                            root.selectedSsid = modelData.ssid
+                            ssid.text = modelData.ssid
+                            password.forceActiveFocus()
+                            root.keyboardTarget = password
+                        }
+                    }
+                }
+            }
+        }
+
+        SectionCard {
+            width: parent.width - 388
+            height: parent.height
+            title: qsTr("Connect")
+            Column {
+                anchors.fill: parent
+                spacing: 7
+                AppTextField {
+                    id: ssid
+                    width: parent.width
+                    placeholderText: qsTr("Network name")
+                    enabled: root.hiddenNetwork
+                    onActiveFocusChanged: if (activeFocus)
+                                              root.keyboardTarget = this
+                }
+                AppTextField {
+                    id: password
+                    width: parent.width
+                    placeholderText: qsTr("Password")
+                    echoMode: TextInput.Password
+                    onActiveFocusChanged: if (activeFocus)
+                                              root.keyboardTarget = this
+                }
+                Row {
+                    spacing: 8
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Hidden network")
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.pixelSize: Theme.px(13)
+                    }
+                    Switch {
+                        checked: root.hiddenNetwork
+                        onToggled: root.hiddenNetwork = checked
+                    }
+                }
+                Row {
+                    spacing: 8
+                    AppButton {
+                        text: qsTr("Connect")
+                        variant: "primary"
+                        enabled: ssid.text.length > 0
+                        onClicked: {
+                            network.connectNetwork(ssid.text, password.text,
+                                                   root.hiddenNetwork)
+                            password.text = ""
+                            root.keyboardTarget = null
+                        }
+                    }
+                    AppButton {
+                        text: qsTr("Forget")
+                        variant: "danger"
+                        enabled: ssid.text.length > 0
+                        onClicked: network.forgetNetwork(ssid.text)
+                    }
+                }
+                Text {
+                    width: parent.width
+                    text: qsTr("OpenCaddie supports personal WPA2/WPA3. Enterprise Wi-Fi is outside V1.")
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(11)
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+    }
+
+    OnScreenKeyboard {
+        id: keyboard
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        target: root.keyboardTarget
+        visible: root.keyboardTarget !== null
+        onDone: {
+            if (root.keyboardTarget)
+                root.keyboardTarget.focus = false
+            root.keyboardTarget = null
+        }
+    }
+}

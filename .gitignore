@@ -1,0 +1,25 @@
+# Build output
+/build*/
+/out/
+/dist/
+/_CPack_Packages/
+/*.tar.gz
+/*.tar.gz.sha256
+/*.deb
+
+# Local runtime data
+/.opencaddie/
+/*.sqlite
+/*.sqlite-shm
+/*.sqlite-wal
+
+# IDE and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.user
+*.autosave
+
+# Generated Qt files
+*.qm
+/.qm/

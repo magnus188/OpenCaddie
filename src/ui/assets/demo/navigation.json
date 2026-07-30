@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1",
+  "coordinateReferenceSystem": "WGS84",
+  "localUnits": "meters",
+  "course": {
+    "name": "OpenCaddie Demo Course",
+    "slug": "opencaddie-demo",
+    "location": { "lat": 59.95, "lng": 10.62, "country": "Norway" }
+  },
+  "holes": [
+    {
+      "number": 1,
+      "par": 4,
+      "handicap": 7,
+      "projection": {
+        "type": "local-equirectangular",
+        "origin": { "lng": 10.62, "lat": 59.95 },
+        "earthRadiusMeters": 6378137,
+        "rotationRadians": 0
+      },
+      "viewBox": [-88, -208, 176, 416],
+      "playLine": [
+        [10.62, 59.94858],
+        [10.61993, 59.94955],
+        [10.62007, 59.95048],
+        [10.62, 59.95143]
+      ],
+      "green": {
+        "polygon": [
+          [
+            [10.61970, 59.95136],
+            [10.61974, 59.95157],
+            [10.62030, 59.95158],
+            [10.62038, 59.95138],
+            [10.62012, 59.95122],
+            [10.61970, 59.95136]
+          ]
+        ],
+        "centre": [10.62, 59.95143],
+        "localCentre": [0, -159]
+      },
+      "tees": [
+        {
+          "label": "Yellow",
+          "centre": [10.62, 59.94858],
+          "localCentre": [0, 158]
+        }
+      ]
+    }
+  ],
+  "attribution": "© OpenStreetMap contributors (ODbL)"
+}
+

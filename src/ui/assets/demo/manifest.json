@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "2",
+  "course": {
+    "name": "OpenCaddie Demo Course",
+    "slug": "opencaddie-demo",
+    "location": { "lat": 59.95, "lng": 10.62, "country": "Norway" },
+    "formatVersion": "0.1.0-geo",
+    "version": "bundled-v1",
+    "updatedAt": "2026-07-29T00:00:00.000Z"
+  },
+  "style": "semantic",
+  "assetFormat": "json",
+  "distanceUnit": "meters",
+  "quality": {
+    "score": 100,
+    "totals": {
+      "holes": 1,
+      "features": 11,
+      "unassignedFeatures": 0,
+      "holesComplete": 1,
+      "holesMissingGreen": 0,
+      "holesMissingHoleLine": 0
+    }
+  },
+  "licensing": {
+    "dataLicense": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors (ODbL)",
+    "source": "OpenStreetMap"
+  },
+  "attribution": "© OpenStreetMap contributors (ODbL)"
+}
+
