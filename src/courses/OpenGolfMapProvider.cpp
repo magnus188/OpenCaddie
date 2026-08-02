@@ -167,10 +167,13 @@ void OpenGolfMapProvider::cancel() {
 }
 
 void OpenGolfMapProvider::checkReachability() {
+    const QUrl requestedBase = m_baseUrl;
     auto request = requestFor(QStringLiteral("/api/v1/health"));
     auto* reply = m_network.get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply] {
-        setReachable(reply->error() == QNetworkReply::NoError);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, requestedBase] {
+        if (m_baseUrl == requestedBase) {
+            setReachable(reply->error() == QNetworkReply::NoError);
+        }
         reply->deleteLater();
     });
 }

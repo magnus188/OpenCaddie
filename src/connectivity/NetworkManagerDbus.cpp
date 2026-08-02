@@ -42,6 +42,9 @@ NetworkManagerDbus::NetworkManagerDbus(QObject* parent)
 
 QVariantList NetworkManagerDbus::networks() const { return m_networks; }
 QString NetworkManagerDbus::connectedSsid() const { return m_connectedSsid; }
+int NetworkManagerDbus::connectedSignalStrength() const {
+    return m_connectedSignalStrength;
+}
 bool NetworkManagerDbus::scanning() const { return m_scanning; }
 bool NetworkManagerDbus::internetReachable() const {
     return m_internetReachable;
@@ -83,7 +86,14 @@ void NetworkManagerDbus::scan() {
 
 void NetworkManagerDbus::refresh() {
     const auto device = wirelessDevice();
-    if (!device) return;
+    if (!device) {
+        if (!m_connectedSsid.isEmpty() || m_connectedSignalStrength >= 0) {
+            m_connectedSsid.clear();
+            m_connectedSignalStrength = -1;
+            emit connectionChanged();
+        }
+        return;
+    }
     QDBusInterface wireless(Service, device->path(), DeviceWirelessInterface,
                             QDBusConnection::systemBus());
     const QDBusReply<QList<QDBusObjectPath>> reply =
@@ -126,6 +136,30 @@ void NetworkManagerDbus::refresh() {
     }
     m_networks = networks;
     emit networksChanged();
+
+    QString connectedSsid;
+    int connectedSignalStrength = -1;
+    const QVariant activeValue =
+        dbusProperty(device->path(), DeviceWirelessInterface,
+                     QStringLiteral("ActiveAccessPoint"));
+    const QDBusObjectPath activeAccessPoint = activeValue.value<QDBusObjectPath>();
+    if (!activeAccessPoint.path().isEmpty() &&
+        activeAccessPoint.path() != QStringLiteral("/")) {
+        connectedSsid = ssidString(dbusProperty(
+            activeAccessPoint.path(),
+            QStringLiteral("org.freedesktop.NetworkManager.AccessPoint"),
+            QStringLiteral("Ssid")));
+        connectedSignalStrength = static_cast<int>(dbusProperty(
+            activeAccessPoint.path(),
+            QStringLiteral("org.freedesktop.NetworkManager.AccessPoint"),
+            QStringLiteral("Strength")).toUInt());
+    }
+    if (connectedSsid != m_connectedSsid ||
+        connectedSignalStrength != m_connectedSignalStrength) {
+        m_connectedSsid = connectedSsid;
+        m_connectedSignalStrength = connectedSignalStrength;
+        emit connectionChanged();
+    }
 
     const uint connectivity =
         dbusProperty(QString::fromLatin1(Root), QString::fromLatin1(ManagerInterface),
@@ -249,6 +283,7 @@ void NetworkManagerDbus::forgetNetwork(const QString& ssid) {
     }
     if (m_connectedSsid == ssid) {
         m_connectedSsid.clear();
+        m_connectedSignalStrength = -1;
         emit connectionChanged();
     }
     emit operationFinished(removed,

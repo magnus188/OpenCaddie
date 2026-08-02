@@ -17,6 +17,30 @@ std::optional<storage::CachedCourse> fail(QString* error,
     if (error) *error = message;
     return std::nullopt;
 }
+
+bool validRenderModel(const QByteArray &bytes) {
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(bytes, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !document.isObject())
+        return false;
+    const QJsonObject root = document.object();
+    const QJsonObject model = root.contains(QStringLiteral("model"))
+                                  ? root.value(QStringLiteral("model")).toObject()
+                                  : root;
+    const QJsonArray holes = model.value(QStringLiteral("holes")).toArray();
+    if (holes.isEmpty()) return false;
+    for (const auto &value : holes) {
+        const QJsonObject hole = value.toObject();
+        const QJsonArray viewBox = hole.value(QStringLiteral("viewBox")).toArray();
+        if (hole.value(QStringLiteral("number")).toInt() <= 0 ||
+            viewBox.size() != 4 || viewBox.at(2).toDouble() <= 0.0 ||
+            viewBox.at(3).toDouble() <= 0.0 ||
+            !hole.value(QStringLiteral("features")).isArray()) {
+            return false;
+        }
+    }
+    return true;
+}
 } // namespace
 
 CoursePackageManager::CoursePackageManager(
@@ -79,6 +103,10 @@ CoursePackageManager::install(const QByteArray& archive, QString* error) {
     if (!contents->files.contains(QStringLiteral("render-model.json")) ||
         !contents->files.contains(QStringLiteral("navigation.json"))) {
         return fail(error, QStringLiteral("Course package is incomplete."));
+    }
+    if (!validRenderModel(
+            contents->files.value(QStringLiteral("render-model.json")))) {
+        return fail(error, QStringLiteral("Course render model is invalid."));
     }
 
     QDir root(m_coursesRoot);

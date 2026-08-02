@@ -15,7 +15,7 @@ Dialog {
 
     background: Rectangle {
         color: Theme.surface
-        radius: Theme.radius
+        radius: Theme.sheetRadius
         border.width: 1
         border.color: Theme.border
     }
@@ -45,6 +45,7 @@ Dialog {
             spacing: 10
             AppButton {
                 text: qsTr("Cancel")
+                variant: "accent"
                 onClicked: dialog.close()
             }
             AppButton {
@@ -58,4 +59,3 @@ Dialog {
         }
     }
 }
-

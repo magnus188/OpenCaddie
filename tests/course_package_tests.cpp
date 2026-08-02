@@ -55,7 +55,7 @@ QJsonObject asset(const QString& file, const QByteArray& bytes,
 QByteArray package(const bool corruptHash = false,
                    const bool includeAttribution = true,
                    const QString& schema = QStringLiteral("2")) {
-    const QByteArray render = R"({"schemaVersion":"1","holes":[]})";
+    const QByteArray render = R"({"schemaVersion":"1","holes":[{"number":1,"viewBox":[0,0,100,200],"features":[{"kind":"fairway","d":"M10 10H90V190H10Z"}]}]})";
     const QByteArray navigation = R"({"schemaVersion":"1","holes":[]})";
     const QJsonObject manifest{
         {QStringLiteral("schemaVersion"), schema},

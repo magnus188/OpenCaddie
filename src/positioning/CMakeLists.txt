@@ -1,7 +1,9 @@
 add_library(opencaddie_positioning STATIC
     PositionProvider.h
+    ProviderSelection.h
     GpsdPositionProvider.cpp
     ManualPositionProvider.cpp
+    NoFixPositionProvider.cpp
     RouteReplayPositionProvider.cpp
 )
 

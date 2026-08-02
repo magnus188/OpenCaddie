@@ -1,8 +1,10 @@
 #include "domain/ClubRecommendation.h"
 #include "domain/Geo.h"
 #include "domain/HoleSelector.h"
+#include "domain/NearGreenTrigger.h"
 #include "domain/Scoring.h"
 #include "domain/Settings.h"
+#include "domain/Statistics.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -37,8 +39,7 @@ int main() {
           "plus one gives a stroke back on SI 18");
     check(handicapStrokesForHole(-1, 1) == 0,
           "plus one does not give a stroke back on SI 1");
-    check(stablefordPoints({1, 4, 1}, 5, 18) == 2,
-          "net par is two Stableford points");
+    check(stablefordPoints({1, 4, 1}, 5, 18) == 2, "net par is two Stableford points");
     check(stablefordPoints({1, 4, 18}, 3, 18) == 4,
           "net eagle is four Stableford points");
 
@@ -46,22 +47,20 @@ int main() {
     const std::vector<HoleScore> scores{{.hole = 1, .strokes = 5},
                                         {.hole = 2, .strokes = 3}};
     const auto summary = summarizeScores(holes, scores, 0);
-    check(summary.gross == 8 && summary.versusPar == 1,
-          "gross and versus-par summary");
+    check(summary.gross == 8 && summary.versusPar == 1, "gross and versus-par summary");
     check(canUseHandicapScoring(holes), "valid par/index enables handicap");
-    check(!canUseHandicapScoring(
-              std::vector<HoleDefinition>{{1, 4, 0}, {2, 3, 2}}),
+    check(!canUseHandicapScoring(std::vector<HoleDefinition>{{1, 4, 0}, {2, 3, 2}}),
           "missing index blocks handicap");
     const std::vector<HoleDefinition> frontNine{
-        {1, 4, 11}, {2, 4, 3},  {3, 3, 17}, {4, 5, 1}, {5, 4, 9},
-        {6, 3, 15}, {7, 4, 5},  {8, 5, 7},  {9, 4, 13},
+        {1, 4, 11}, {2, 4, 3}, {3, 3, 17}, {4, 5, 1},  {5, 4, 9},
+        {6, 3, 15}, {7, 4, 5}, {8, 5, 7},  {9, 4, 13},
     };
     check(canUseHandicapScoring(frontNine),
           "an 18-hole course index remains valid for a nine-hole round");
     check(handicapIndexScale(frontNine) == 18,
           "nine-hole section preserves the original 18-hole index scale");
-    check(stablefordPoints(frontNine.front(), 5, 18,
-                           handicapIndexScale(frontNine)) == 2,
+    check(stablefordPoints(frontNine.front(), 5, 18, handicapIndexScale(frontNine)) ==
+              2,
           "nine-hole section allocates handicap on the 18-hole scale");
     const std::vector<HoleDefinition> nineHoleCourse{
         {1, 4, 1}, {2, 4, 2}, {3, 3, 3}, {4, 5, 4}, {5, 4, 5},
@@ -69,9 +68,20 @@ int main() {
     };
     check(handicapIndexScale(nineHoleCourse) == 9,
           "a true nine-hole course uses a 1-9 index scale");
-    check(!canUseHandicapScoring(
-              std::vector<HoleDefinition>{{1, 4, 1}, {2, 3, 1}}),
+    check(!canUseHandicapScoring(std::vector<HoleDefinition>{{1, 4, 1}, {2, 3, 1}}),
           "duplicate stroke indexes block handicap scoring");
+    check(classifyHole(5, 2) == HoleOutcome::AlbatrossOrBetter,
+          "three under is classified as albatross or better");
+    check(classifyHole(4, 2) == HoleOutcome::Eagle, "two under is classified as eagle");
+    check(classifyHole(4, 3) == HoleOutcome::Birdie,
+          "one under is classified as birdie");
+    check(classifyHole(4, 4) == HoleOutcome::Par, "level par is classified as par");
+    check(classifyHole(4, 5) == HoleOutcome::Bogey, "one over is classified as bogey");
+    check(classifyHole(2, 2) == HoleOutcome::NotRecorded &&
+              classifyHole(7, 7) == HoleOutcome::NotRecorded,
+          "out-of-range par is not classified as a scoring outcome");
+    checkNear(consistencyStandardDeviation(std::vector<int>{4, 6, 8}), 1.633, 0.001,
+              "consistency uses population standard deviation");
 
     const std::vector<Club> clubs{
         {"7i", "7 iron", 145.0, true, 0},
@@ -86,8 +96,7 @@ int main() {
 
     const GeoPoint oslo{59.9139, 10.7522};
     const GeoPoint nearby{59.9148, 10.7522};
-    checkNear(haversineMetres(oslo, nearby), 100.1, 1.0,
-              "haversine distance");
+    checkNear(haversineMetres(oslo, nearby), 100.1, 1.0, "haversine distance");
     const LocalProjection projection{oslo, 6'378'137.0, -0.7};
     const auto [x, y] = projectToLocal(nearby, projection);
     const auto roundTrip = unprojectFromLocal(x, y, projection);
@@ -97,8 +106,7 @@ int main() {
               "projection longitude round-trip");
 
     const auto now = std::chrono::system_clock::now();
-    check(isUsableFix({oslo, 8.0, now, true}, now),
-          "fresh accurate GPS fix is usable");
+    check(isUsableFix({oslo, 8.0, now, true}, now), "fresh accurate GPS fix is usable");
     check(!isUsableFix({oslo, 26.0, now, true}, now),
           "club advice suppressed above 25m");
     check(!isUsableFix({oslo, 8.0, now - std::chrono::seconds(11), true}, now),
@@ -109,6 +117,26 @@ int main() {
     check(selector.update(closer) == 1, "hysteresis waits for confirmation 1");
     check(selector.update(closer) == 1, "hysteresis waits for confirmation 2");
     check(selector.update(closer) == 2, "hysteresis switches after confirmation");
+
+    NearGreenTrigger scoreTrigger;
+    check(!scoreTrigger.update(1, 34.0, false, false),
+          "near-green prompt requires a usable fix");
+    check(!scoreTrigger.update(1, 36.0, true, false),
+          "near-green prompt waits for the entry threshold");
+    check(scoreTrigger.update(1, 35.0, true, false),
+          "near-green prompt fires at 35 metres");
+    check(!scoreTrigger.update(1, 20.0, true, false),
+          "near-green prompt fires once while inside the threshold");
+    check(!scoreTrigger.update(1, 50.0, true, false),
+          "near-green prompt does not re-arm at the exit boundary");
+    check(!scoreTrigger.update(1, 51.0, true, false) && scoreTrigger.armed(),
+          "near-green prompt re-arms beyond 50 metres");
+    check(scoreTrigger.update(1, 30.0, true, false),
+          "re-armed near-green prompt can fire after exiting");
+    check(!scoreTrigger.update(1, 60.0, true, true) && !scoreTrigger.armed(),
+          "saved score permanently suppresses the current hole");
+    check(scoreTrigger.update(2, 25.0, true, false),
+          "manual hole changes reset near-green trigger state");
 
     Settings settings;
     check(!validateSettings(settings), "default settings are valid");

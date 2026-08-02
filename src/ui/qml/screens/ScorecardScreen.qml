@@ -29,8 +29,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
         title: qsTr("Scorecard")
         subtitle: app.courseName
         onBack: app.screen = "LiveHoleScreen"
@@ -42,9 +42,8 @@ Item {
         anchors.rightMargin: 16
         anchors.verticalCenter: header.verticalCenter
         spacing: 8
-        Rectangle {
-            width: 82; height: 42; radius: Theme.radius
-            color: Theme.surface; border.width: 1; border.color: Theme.border
+        Item {
+            width: 82; height: 42
             Text {
                 anchors.centerIn: parent
                 text: qsTr("Gross %1").arg(root.grossTotal)
@@ -53,9 +52,8 @@ Item {
                 font.pixelSize: Theme.px(13)
             }
         }
-        Rectangle {
-            width: 82; height: 42; radius: Theme.radius
-            color: Theme.surface; border.width: 1; border.color: Theme.border
+        Item {
+            width: 82; height: 42
             Text {
                 anchors.centerIn: parent
                 text: root.grossTotal === 0 ? qsTr("E") :
@@ -66,10 +64,8 @@ Item {
                 font.pixelSize: Theme.px(14)
             }
         }
-        Rectangle {
-            width: 82; height: 42; radius: Theme.radius
-            color: Qt.rgba(0.18, 0.80, 0.39, 0.12)
-            border.width: 1; border.color: Theme.fairway
+        Item {
+            width: 82; height: 42
             Text {
                 anchors.centerIn: parent
                 text: qsTr("%1 pts").arg(root.pointsTotal)
@@ -88,22 +84,24 @@ Item {
         anchors.margins: 16
         anchors.topMargin: 4
         anchors.bottomMargin: 8
-        radius: Theme.radius
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.border
+        color: "transparent"
 
         ListView {
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 0
             clip: true
             spacing: 2
             model: app.scorecard
-            header: Rectangle {
+            header: Item {
                 width: ListView.view.width
                 height: 34
-                color: Theme.surfaceRaised
-                radius: 6
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 1
+                    color: Theme.divider
+                }
                 Row {
                     anchors.fill: parent
                     Repeater {
@@ -137,10 +135,16 @@ Item {
                 required property int index
                 width: ListView.view.width
                 height: 38
-                radius: 5
                 color: modelData.hole === app.currentHole
                        ? Qt.rgba(0.18, 0.80, 0.39, 0.12)
-                       : index % 2 === 0 ? "transparent" : Theme.surfaceRaised
+                       : scoreTap.pressed ? Theme.controlPressed : "transparent"
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 1
+                    color: Theme.divider
+                }
                 Row {
                     anchors.fill: parent
                     Repeater {
@@ -168,6 +172,7 @@ Item {
                     }
                 }
                 TapHandler {
+                    id: scoreTap
                     onTapped: {
                         app.setHole(modelData.hole)
                         app.screen = "LiveHoleScreen"

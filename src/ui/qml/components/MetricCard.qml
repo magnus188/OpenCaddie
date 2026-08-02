@@ -8,30 +8,41 @@ Rectangle {
     property color accent: Theme.text
     property bool prominent: false
 
-    radius: Theme.radius
-    color: prominent ? Qt.rgba(0.18, 0.80, 0.39, 0.12) : Theme.surface
-    border.width: 1
-    border.color: prominent ? Theme.fairway : Theme.border
+    radius: 0
+    color: "transparent"
+    border.width: 0
 
     Column {
-        anchors.centerIn: parent
-        spacing: 1
+        anchors.fill: parent
+        anchors.margins: 6
+        spacing: 0
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            height: 18
             text: card.label
-            color: Theme.textMuted
+            color: card.prominent ? Theme.fairway : Theme.textMuted
             font.family: "Inter"
             font.pixelSize: Theme.px(11)
             font.weight: Font.Medium
+            fontSizeMode: Text.Fit
+            minimumPixelSize: 8
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
         }
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            height: parent.height - 18
             text: card.value
             color: card.accent
             font.family: "Inter"
             font.pixelSize: Theme.px(card.prominent ? 30 : 24)
             font.weight: Font.Bold
+            fontSizeMode: Text.Fit
+            minimumPixelSize: 12
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
         }
     }
 }
-

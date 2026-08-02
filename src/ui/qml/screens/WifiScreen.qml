@@ -14,13 +14,13 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
         title: qsTr("Wi-Fi")
         subtitle: network.connectedSsid.length > 0
                   ? qsTr("Connected to %1").arg(network.connectedSsid)
                   : qsTr("Not connected")
-        onBack: app.screen = "SettingsScreen"
+        onBack: app.screen = "SettingsConnectivityScreen"
     }
 
     AppButton {
@@ -37,7 +37,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
-        anchors.bottom: keyboard.top
+        anchors.bottom: keyboard.visible ? keyboard.top : parent.bottom
         anchors.margins: 16
         anchors.topMargin: 4
         anchors.bottomMargin: keyboard.visible ? 8 : 16
@@ -51,18 +51,22 @@ Item {
                 anchors.fill: parent
                 model: network.networks
                 clip: true
-                spacing: 6
+                spacing: 0
                 delegate: Rectangle {
                     required property var modelData
                     width: ListView.view.width
                     height: 55
-                    radius: Theme.radius
                     color: root.selectedSsid === modelData.ssid
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
-                           : Theme.surfaceRaised
-                    border.width: 1
-                    border.color: root.selectedSsid === modelData.ssid
-                                  ? Theme.fairway : Theme.border
+                           ? Qt.rgba(0.18, 0.80, 0.39, 0.11)
+                           : networkTap.pressed ? Theme.controlPressed
+                                                : "transparent"
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: Theme.divider
+                    }
                     Column {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
@@ -92,6 +96,7 @@ Item {
                         font.pixelSize: Theme.px(12)
                     }
                     TapHandler {
+                        id: networkTap
                         onTapped: {
                             root.selectedSsid = modelData.ssid
                             ssid.text = modelData.ssid

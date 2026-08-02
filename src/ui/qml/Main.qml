@@ -14,9 +14,41 @@ ApplicationWindow {
 
     Loader {
         id: screenLoader
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: Theme.statusHeight
+        anchors.bottom: parent.bottom
         source: "screens/" + app.screen + ".qml"
         focus: true
+        opacity: status === Loader.Ready ? 1 : 0
+        scale: (app.screen === "RoundMapScreen" ||
+                app.screen === "CoursePlannerMapScreen") && status === Loader.Ready
+               ? 1 : 0.992
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motion; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
+        }
+    }
+
+    Connections {
+        target: app
+        function onScoreEntryRequested(hole) {
+            app.screen = "HoleScoreScreen"
+        }
+    }
+
+    SystemStatusBar {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        z: 90
+    }
+
+    ScoreCelebrationOverlay {
+        anchors.fill: parent
     }
 
     Rectangle {

@@ -36,10 +36,9 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
         title: qsTr("My bag")
-        subtitle: qsTr("Carry distances drive on-course recommendations")
         onBack: app.screen = "WelcomeScreen"
     }
 
@@ -56,7 +55,6 @@ Item {
             width: 390
             height: parent.height
             title: qsTr("Enabled clubs")
-            subtitle: qsTr("Stored canonically in metres")
 
             ListView {
                 anchors.left: parent.left
@@ -66,20 +64,33 @@ Item {
                 anchors.bottomMargin: 8
                 model: app.clubs
                 clip: true
-                spacing: 5
+                spacing: 0
 
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
                     width: ListView.view.width
                     height: 52
-                    radius: Theme.radius
                     color: root.selectedId === modelData.id
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
-                           : Theme.surfaceRaised
-                    border.width: 1
-                    border.color: root.selectedId === modelData.id
-                                  ? Theme.fairway : Theme.border
+                           ? Qt.rgba(0.18, 0.80, 0.39, 0.10)
+                           : clubTap.pressed ? Theme.controlPressed
+                                             : "transparent"
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: Theme.divider
+                    }
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 3
+                        height: 28
+                        radius: 2
+                        visible: root.selectedId === modelData.id
+                        color: Theme.fairway
+                    }
                     Text {
                         anchors.left: parent.left
                         anchors.leftMargin: 12
@@ -101,6 +112,7 @@ Item {
                         font.pixelSize: Theme.px(15)
                     }
                     TapHandler {
+                        id: clubTap
                         onTapped: root.selectClub(index, modelData)
                     }
                 }
@@ -224,4 +236,3 @@ Item {
         }
     }
 }
-

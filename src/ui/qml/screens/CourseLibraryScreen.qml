@@ -1,16 +1,19 @@
 import QtQuick
 import OpenCaddie
 
-Item {
+PageScaffold {
     id: root
     anchors.fill: parent
-    property string selectedSlug: app.courses.length > 0 ? app.courses[0].slug : ""
-    property var selectedCourse: {
-        for (var i = 0; i < app.courses.length; ++i) {
-            if (app.courses[i].slug === selectedSlug)
-                return app.courses[i]
-        }
-        return ({})
+    property string pendingSlug
+    property string pendingVersion
+    property string pendingName
+
+    function requestDelete(course) {
+        if (course.slug === "opencaddie-demo") return
+        pendingSlug = course.slug
+        pendingVersion = course.version
+        pendingName = course.name
+        removeDialog.open()
     }
 
     TopBar {
@@ -18,237 +21,138 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        title: qsTr("Courses")
-        subtitle: qsTr("Downloaded courses work without internet")
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
+        title: app.coursePickerMode === "plan"
+               ? qsTr("Course analyzer") : qsTr("Play golf")
         onBack: app.screen = "WelcomeScreen"
     }
 
-    Row {
+    ListView {
+        id: courseList
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
-        anchors.bottom: parent.bottom
-        anchors.margins: 16
-        anchors.topMargin: 4
-        spacing: 14
+        anchors.bottom: searchButton.top
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
+        anchors.bottomMargin: 12
+        model: app.courses
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        SectionCard {
-            width: 378
-            height: parent.height
-            title: qsTr("Offline library")
-            subtitle: qsTr("%1 courses").arg(app.courses.length)
+        delegate: Item {
+            id: row
+            required property var modelData
+            property real dragStartX: 0
+            width: ListView.view.width
+            height: 62
 
-            ListView {
-                id: localList
-                anchors.left: parent.left
+            Rectangle {
                 anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: localActions.top
-                anchors.bottomMargin: 8
-                spacing: 8
-                clip: true
-                model: app.courses
-
-                delegate: Rectangle {
-                    required property var modelData
-                    width: ListView.view.width
-                    height: 72
-                    radius: Theme.radius
-                    color: root.selectedSlug === modelData.slug
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
-                           : Theme.surfaceRaised
-                    border.width: root.selectedSlug === modelData.slug ? 2 : 1
-                    border.color: root.selectedSlug === modelData.slug
-                                  ? Theme.fairway : Theme.border
-
-                    Column {
-                        anchors.left: parent.left
-                        anchors.right: quality.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 10
-                        spacing: 2
-                        Text {
-                            width: parent.width
-                            text: modelData.name
-                            color: Theme.text
-                            font.family: "Inter"
-                            font.weight: Font.DemiBold
-                            font.pixelSize: Theme.px(15)
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            width: parent.width
-                            text: qsTr("Offline · %1% quality · © OSM (ODbL)")
-                                      .arg(modelData.qualityScore)
-                            color: Theme.textMuted
-                            font.family: "Inter"
-                            font.pixelSize: Theme.px(11)
-                            elide: Text.ElideRight
-                        }
-                    }
-                    Rectangle {
-                        id: quality
-                        anchors.right: parent.right
-                        anchors.rightMargin: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 50
-                        height: 30
-                        radius: 15
-                        color: Theme.surface
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.qualityScore + "%"
-                            color: modelData.qualityScore >= 75
-                                   ? Theme.fairway : Theme.amber
-                            font.family: "Inter"
-                            font.weight: Font.DemiBold
-                            font.pixelSize: Theme.px(12)
-                        }
-                    }
-                    TapHandler {
-                        onTapped: root.selectedSlug = modelData.slug
-                    }
+                width: Math.max(96, -content.x)
+                height: parent.height
+                color: Theme.danger
+                visible: row.modelData.slug !== "opencaddie-demo"
+                Text {
+                    anchors.centerIn: parent
+                    text: qsTr("Delete")
+                    color: "#FFFFFF"
+                    font.family: "Inter"
+                    font.weight: Font.DemiBold
+                    font.pixelSize: Theme.px(15)
                 }
+                TapHandler { onTapped: root.requestDelete(row.modelData) }
             }
 
-            Row {
-                id: localActions
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                spacing: 8
-                AppButton {
-                    id: removeButton
-                    text: qsTr("Remove")
-                    variant: "danger"
-                    compact: true
-                    enabled: root.selectedSlug.length > 0 &&
-                             root.selectedSlug !== "opencaddie-demo"
-                    onClicked: removeDialog.open()
+            Rectangle {
+                id: content
+                x: 0
+                width: parent.width
+                height: parent.height
+                color: rowTap.pressed ? Theme.controlPressed : Theme.background
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.right: chevron.left
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: row.modelData.name
+                    color: Theme.text
+                    font.family: "Inter"
+                    font.weight: Font.Medium
+                    font.pixelSize: Theme.px(17)
+                    elide: Text.ElideRight
                 }
-                Item {
-                    width: Math.max(0, parent.width - removeButton.width -
-                                    setupButton.width - 8)
+                IconButton {
+                    id: chevron
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    transparent: true
+                    iconSource: "../../assets/icons/lucide/chevron-right.svg"
+                    iconColor: Theme.textMuted
+                    accessibleName: qsTr("Open %1").arg(row.modelData.name)
+                    onClicked: app.activateCourse(row.modelData.slug)
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
                     height: 1
+                    color: Theme.divider
                 }
-                AppButton {
-                    id: setupButton
-                    text: qsTr("Set up round")
-                    variant: "primary"
-                    enabled: root.selectedSlug.length > 0
-                    onClicked: app.prepareRound(root.selectedSlug)
+                TapHandler {
+                    id: rowTap
+                    gesturePolicy: TapHandler.ReleaseWithinBounds
+                    onTapped: {
+                        if (content.x < -1) content.x = 0
+                        else app.activateCourse(row.modelData.slug)
+                    }
+                }
+                DragHandler {
+                    target: null
+                    enabled: row.modelData.slug !== "opencaddie-demo"
+                    xAxis.enabled: true
+                    yAxis.enabled: false
+                    onActiveChanged: {
+                        if (active) row.dragStartX = content.x
+                        else if (content.x < -row.width * 0.72) {
+                            content.x = 0
+                            root.requestDelete(row.modelData)
+                        } else {
+                            content.x = content.x < -48 ? -96 : 0
+                        }
+                    }
+                    onTranslationChanged: {
+                        content.x = Math.max(-row.width,
+                                             Math.min(0, row.dragStartX + translation.x))
+                    }
+                }
+                Behavior on x {
+                    NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
                 }
             }
         }
+    }
 
-        SectionCard {
-            width: parent.width - 392
-            height: parent.height
-            title: qsTr("Find a course")
-            subtitle: network.internetReachable
-                      ? qsTr("OpenGolfMap service")
-                      : qsTr("Connect to Wi-Fi to search")
-
-            Row {
-                id: searchRow
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                spacing: 8
-                AppTextField {
-                    id: searchField
-                    width: parent.width - searchButton.width - 8
-                    placeholderText: qsTr("Course name or place")
-                    onAccepted: app.searchCourses(text)
-                }
-                AppButton {
-                    id: searchButton
-                    text: app.searching ? qsTr("Searching…") : qsTr("Search")
-                    compact: true
-                    enabled: !app.searching && searchField.text.length >= 2
-                    onClicked: app.searchCourses(searchField.text)
-                }
-            }
-
-            ListView {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: searchRow.bottom
-                anchors.bottom: wifiButton.top
-                anchors.topMargin: 10
-                anchors.bottomMargin: 8
-                clip: true
-                spacing: 7
-                model: app.searchResults
-
-                delegate: Rectangle {
-                    required property var modelData
-                    width: ListView.view.width
-                    height: 66
-                    radius: Theme.radius
-                    color: Theme.surfaceRaised
-                    border.width: 1
-                    border.color: Theme.border
-                    Text {
-                        anchors.left: parent.left
-                        anchors.right: download.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.margins: 10
-                        text: modelData.displayName
-                        color: Theme.text
-                        font.family: "Inter"
-                        font.pixelSize: Theme.px(13)
-                        wrapMode: Text.Wrap
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
-                    }
-                    AppButton {
-                        id: download
-                        anchors.right: parent.right
-                        anchors.rightMargin: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Download")
-                        compact: true
-                        enabled: !app.downloading
-                        onClicked: app.downloadCourse(modelData)
-                    }
-                }
-            }
-
-            AppButton {
-                id: wifiButton
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                text: qsTr("Wi-Fi settings")
-                compact: true
-                onClicked: app.screen = "WifiScreen"
-            }
-            Text {
-                anchors.left: wifiButton.right
-                anchors.leftMargin: 12
-                anchors.verticalCenter: wifiButton.verticalCenter
-                text: app.downloading
-                      ? qsTr("Downloading %1%").arg(Math.round(app.downloadProgress * 100))
-                      : ""
-                color: Theme.fairway
-                font.family: "Inter"
-                font.pixelSize: Theme.px(12)
-            }
-        }
+    AppButton {
+        id: searchButton
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
+        anchors.bottomMargin: 18
+        text: qsTr("Search for more courses")
+        variant: "surface"
+        onClicked: app.screen = "CourseSearchScreen"
     }
 
     ConfirmDialog {
         id: removeDialog
-        title: qsTr("Remove offline course?")
-        bodyText: qsTr("The course can be downloaded again later. Round history is kept.")
-        onConfirmed: {
-            app.removeCourse(root.selectedCourse.slug,
-                             root.selectedCourse.version)
-            root.selectedSlug = app.courses.length > 0
-                                ? app.courses[0].slug : ""
-        }
+        title: qsTr("Delete course?")
+        bodyText: root.pendingName
+        onConfirmed: app.removeCourse(root.pendingSlug, root.pendingVersion)
     }
 }

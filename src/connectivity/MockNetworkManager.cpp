@@ -6,6 +6,9 @@ namespace opencaddie::connectivity {
 
 QVariantList MockNetworkManager::networks() const { return m_networks; }
 QString MockNetworkManager::connectedSsid() const { return m_connectedSsid; }
+int MockNetworkManager::connectedSignalStrength() const {
+    return m_connectedSignalStrength;
+}
 bool MockNetworkManager::scanning() const { return m_scanning; }
 bool MockNetworkManager::internetReachable() const {
     return !m_connectedSsid.isEmpty();
@@ -45,6 +48,15 @@ void MockNetworkManager::connectNetwork(const QString& ssid,
         return;
     }
     m_connectedSsid = ssid;
+    m_connectedSignalStrength = -1;
+    for (const auto &network : std::as_const(m_networks)) {
+        const auto values = network.toMap();
+        if (values.value(QStringLiteral("ssid")).toString() == ssid) {
+            m_connectedSignalStrength =
+                values.value(QStringLiteral("signal"), -1).toInt();
+            break;
+        }
+    }
     emit connectionChanged();
     emit internetReachableChanged();
     emit operationFinished(true, tr("Connected to %1").arg(ssid));
@@ -53,6 +65,7 @@ void MockNetworkManager::connectNetwork(const QString& ssid,
 void MockNetworkManager::forgetNetwork(const QString& ssid) {
     if (m_connectedSsid == ssid) {
         m_connectedSsid.clear();
+        m_connectedSignalStrength = -1;
         emit connectionChanged();
         emit internetReachableChanged();
     }
@@ -60,4 +73,3 @@ void MockNetworkManager::forgetNetwork(const QString& ssid) {
 }
 
 } // namespace opencaddie::connectivity
-

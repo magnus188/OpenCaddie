@@ -10,8 +10,7 @@ Rectangle {
 
     color: "transparent"
     radius: Theme.radius
-    border.width: 1
-    border.color: Theme.border
+    border.width: 0
     implicitHeight: body.childrenRect.height + (titleLabel.text.length > 0 ? 58 : 24)
 
     Text {
@@ -44,9 +43,21 @@ Rectangle {
         id: body
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: titleLabel.text.length > 0 ? subtitleLabel.bottom : parent.top
+        anchors.top: titleLabel.text.length > 0
+                     ? (subtitleLabel.visible
+                        ? subtitleLabel.bottom : titleLabel.bottom)
+                     : parent.top
         anchors.bottom: parent.bottom
         anchors.margins: 14
         anchors.topMargin: titleLabel.text.length > 0 ? 10 : 12
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 1
+        color: Theme.divider
+        opacity: 0.8
     }
 }

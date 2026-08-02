@@ -15,9 +15,11 @@ TextField {
     font.pixelSize: Theme.px(16)
     background: Rectangle {
         radius: Theme.radius
-        color: Theme.surfaceRaised
-        border.width: field.activeFocus ? 2 : 1
+        color: Theme.surface
+        border.width: 1
         border.color: field.activeFocus ? Theme.fairway : Theme.border
+        Behavior on border.color {
+            ColorAnimation { duration: Theme.motionFast }
+        }
     }
 }
-

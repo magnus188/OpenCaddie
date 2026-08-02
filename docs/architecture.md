@@ -11,6 +11,7 @@ flowchart LR
   Controller --> Storage["SQLite repositories"]
   Controller --> Courses["CourseProvider / package manager"]
   Controller --> Position["PositionProvider"]
+  Controller --> Integrations["External data provider boundary"]
   QML --> Network["NetworkManager"]
   QML --> Power["PowerProvider"]
   Courses --> OGM["OpenGolfMap API"]
@@ -24,6 +25,20 @@ SQLite uses WAL, foreign keys, `synchronous=FULL`, and versioned migrations.
 Every score edit commits before the UI reports success. `rounds.current_hole`
 makes an unfinished round resumable after reboot. Participants and an outbox are
 present in V1 so multiplayer and sync do not require destructive schema changes.
+
+Schema v2 adds weather snapshots with provenance, canonical shot records, safe
+integration-account status (no credentials), and external-round identities.
+Schema v3 adds extensible canonical and source-unit launch-monitor metrics.
+Schema v4 enforces shot/participant/round identity and adds statistics indexes.
+Schema v5 persists the 9/18-hole handicap index scale so historical Stableford
+points cannot change as additional holes are entered, and enforces score
+participant/round identity.
+Schema v6 persists per-hole course-analysis routes and snapshots selected routes
+into a round. This keeps an active round independent from later analysis edits.
+Statistics are projections rebuilt from owner-participant scores and shots.
+Nine-hole and partially scored results are normalized by recorded holes when
+shown on an 18-hole trend, but only when every scored hole has valid par
+metadata. A longest drive is never inferred from a scorecard.
 
 ## Course packages
 
@@ -41,6 +56,6 @@ No slope, weather, or “plays like” value is invented.
 
 ## Extension boundaries
 
-See [V2 design](v2-extension-path.md). OpenFlight is intentionally outside the
+See the [external integration review](integrations.md) and
+[V2 design](v2-extension-path.md). OpenFlight is intentionally outside the
 current architecture decision record.
-

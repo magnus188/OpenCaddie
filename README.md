@@ -2,8 +2,11 @@
 
 OpenCaddie is an open-source, local-first golf computer for Raspberry Pi. It
 combines offline course maps from [OpenGolfMap](https://github.com/magnus188/OpenGolfMap),
-live GNSS distances, scorekeeping, round history, a configurable golf bag, and
-on-device Wi-Fi management in a touch-first 800×480 interface.
+pre-round course analysis with reusable tap-to-measure layups, live GNSS distances,
+scorekeeping, round history, a configurable golf bag, and on-device Wi-Fi
+management in a touch-first 800×480 interface. Completed rounds
+feed local overall/per-course statistics, scoring trends, accuracy summaries,
+weather provenance, and recorded-shot milestones.
 
 > Status: V1 developer preview. The domain, storage, course-package, hardware
 > abstraction, simulator, and device UI are implemented. Hardware endurance and
@@ -11,7 +14,11 @@ on-device Wi-Fi management in a touch-first 800×480 interface.
 
 ![OpenCaddie welcome screen](docs/screenshots/welcome.png)
 
-![OpenCaddie live hole screen](docs/screenshots/live-hole.png)
+![OpenCaddie live hole screen](docs/screenshots/live-hole-map-entry.png)
+
+![OpenCaddie expanded round map](docs/screenshots/round-map.png)
+
+![OpenCaddie course analyzer](docs/screenshots/course-planner.png)
 
 ## Technology
 
@@ -26,6 +33,17 @@ on-device Wi-Fi management in a touch-first 800×480 interface.
 
 Qt 6.8+, CMake 3.24+, Ninja, and a C++20 compiler are required.
 
+The shortest way to run the app is:
+
+```sh
+make simulation
+make simulated-round
+```
+
+Use `make simulation LANGUAGE=nb` for Norwegian. `make help` lists the
+available development commands. To open a specific view while iterating, use
+`make screen SCREEN=StatsScreen`.
+
 ```sh
 cmake --preset desktop
 cmake --build --preset desktop --parallel
@@ -33,6 +51,25 @@ ctest --preset desktop
 cmake --build build/desktop --target opencaddie_qmllint
 ./build/desktop/bin/OpenCaddie.app/Contents/MacOS/OpenCaddie --simulate --windowed
 ```
+
+OpenGolfMap is self-hosted. Start the service from the sibling OpenGolfMap
+repository, then search and download courses from **Courses**:
+
+```sh
+cd ../OpenGolfMap
+npm install
+npm run dev
+
+cd ../Golfcomputer
+./build/desktop/bin/OpenCaddie.app/Contents/MacOS/OpenCaddie \
+  --simulate --windowed --opengolfmap-url http://localhost:3000
+```
+
+For a deployed service, use an HTTPS origin with `--opengolfmap-url`, set
+`OPENCADDIE_OPENGOLFMAP_URL`, or edit the server under **Settings → Connectivity
+and storage**. The API is only needed to search and download a course; map
+graphics, navigation, zoom, measurement, and dogleg planning use the verified
+offline bundle during a round.
 
 On Linux, the executable is `build/desktop/bin/OpenCaddie`. The simulator uses
 mock Wi-Fi/power providers, an embedded semantic course, and a recorded GPS
@@ -67,6 +104,7 @@ live in `user.sqlite`. Wi-Fi secrets are never persisted by OpenCaddie.
 - `src/courses`: OpenGolfMap client and verified atomic course installation
 - `src/positioning`: gpsd, route replay, and manual providers
 - `src/connectivity`: NetworkManager D-Bus and desktop mock
+- `src/integrations`: canonical external-data capabilities and provider catalog
 - `src/platform`: power/brightness boundary
 - `src/ui`: QML application, semantic course renderer, translations
 - `docs`: architecture, hardware, data licensing, security and V2 boundaries
@@ -82,5 +120,6 @@ and exports. See [third-party notices](docs/third-party.md).
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), the
-[architecture](docs/architecture.md), and [security policy](SECURITY.md).
+[architecture](docs/architecture.md), [integration feasibility review](docs/integrations.md),
+and [security policy](SECURITY.md).
 Please keep device features usable without internet after a course download.

@@ -1,34 +1,33 @@
 import QtQuick
 import OpenCaddie
 
-Item {
+PageScaffold {
     id: root
     anchors.fill: parent
+    backgroundColor: Theme.focusBackground
 
-    Rectangle {
-        anchors.fill: parent
-        color: Theme.background
-    }
-
-    // The cropped course silhouette on the right echoes the unfinished Figma
-    // welcome composition without depending on a remote raster asset.
-    Rectangle {
+    Item {
+        id: courseArtwork
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: 210
-        color: "#171A18"
-        radius: width / 2
-        clip: true
-        opacity: 0.78
+        width: 270
+
+        RadialMapGlow {
+            anchors.fill: parent
+            innerColor: app.darkMode ? "rgba(47,203,99,0.16)"
+                                     : "rgba(22,123,67,0.14)"
+            middleColor: app.darkMode ? "rgba(33,78,48,0.08)"
+                                      : "rgba(47,203,99,0.05)"
+        }
 
         CourseMap {
-            anchors.fill: parent
-            anchors.leftMargin: 30
-            anchors.rightMargin: -36
-            anchors.topMargin: 18
-            anchors.bottomMargin: 18
-            modelSource: "qrc:/qt/qml/OpenCaddie/assets/demo/render-model.json"
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenterOffset: 18
+            width: 220
+            height: parent.height - 10
+            modelSource: "qrc:/qt/qml/OpenCaddie/assets/demo/home-render-model.json"
             hole: 1
             colors: app.mapColors
             playerVisible: false
@@ -39,99 +38,100 @@ Item {
         id: title
         anchors.left: parent.left
         anchors.top: parent.top
-        anchors.leftMargin: 96
-        anchors.topMargin: 28
+        anchors.leftMargin: Theme.gutter
+        anchors.topMargin: 4
         text: "OpenCaddie"
         color: Theme.text
         font.family: "Inter"
         font.weight: Font.Bold
-        font.pixelSize: Theme.px(52)
-    }
-
-    Column {
-        id: status
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 18
-        anchors.topMargin: 16
-        spacing: 1
-        Text {
-            anchors.right: parent.right
-            text: network.connectedSsid.length > 0
-                  ? network.connectedSsid : qsTr("Offline")
-            color: network.internetReachable ? Theme.fairway : Theme.textMuted
-            font.family: "Inter"
-            font.weight: Font.DemiBold
-            font.pixelSize: Theme.px(12)
-        }
-        Text {
-            anchors.right: parent.right
-            text: power.batteryPercent >= 0
-                  ? qsTr("%1% battery").arg(power.batteryPercent)
-                  : qsTr("External power")
-            color: Theme.textMuted
-            font.family: "Inter"
-            font.pixelSize: Theme.px(10)
-        }
+        font.pixelSize: Theme.px(46)
     }
 
     Column {
         id: menu
         anchors.left: parent.left
         anchors.top: title.bottom
-        anchors.leftMargin: 202
-        anchors.topMargin: app.hasActiveRound ? 22 : 42
-        width: 396
-        spacing: 10
+        anchors.leftMargin: Theme.gutter
+        anchors.topMargin: 8
+        width: 500
+        spacing: 0
 
         AppButton {
             width: parent.width
-            height: 58
+            height: 52
             text: app.hasActiveRound ? qsTr("Resume round") : qsTr("Play golf")
             variant: "primary"
-            font.pixelSize: Theme.px(23)
+            font.pixelSize: Theme.px(19)
             onClicked: app.hasActiveRound
                        ? app.resumeRound()
-                       : app.screen = "CourseLibraryScreen"
+                       : app.openCoursePicker("start")
         }
+
         Text {
             width: parent.width
-            height: app.hasActiveRound ? 22 : 0
+            height: app.hasActiveRound ? 22 : 6
             visible: app.hasActiveRound
             text: qsTr("%1 · Hole %2 of %3")
                   .arg(app.courseName).arg(app.currentHole).arg(app.holeCount)
             color: Theme.amber
             font.family: "Inter"
             font.weight: Font.DemiBold
-            font.pixelSize: Theme.px(12)
+            font.pixelSize: Theme.px(11)
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
         }
+
         Repeater {
             model: [
+                { label: qsTr("Course analyzer"), action: "plan" },
                 { label: qsTr("History"), screen: "HistoryScreen" },
+                { label: qsTr("Stats"), screen: "StatsScreen" },
                 { label: qsTr("My clubs"), screen: "BagScreen" },
                 { label: qsTr("Settings"), screen: "SettingsScreen" }
             ]
-            AppButton {
+
+            Rectangle {
+                id: row
                 required property var modelData
                 width: menu.width
-                height: 58
-                text: modelData.label
-                font.weight: Font.Normal
-                font.pixelSize: Theme.px(21)
-                onClicked: app.screen = modelData.screen
+                height: 51
+                color: rowTap.pressed ? Theme.controlPressed : "transparent"
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: row.modelData.label
+                    color: Theme.text
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(18)
+                }
+                IconButton {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    transparent: true
+                    iconSource: "../../assets/icons/lucide/chevron-right.svg"
+                    iconColor: Theme.fairway
+                    accessibleName: row.modelData.label
+                    onClicked: row.modelData.action === "plan"
+                               ? app.openCoursePicker("plan")
+                               : app.screen = row.modelData.screen
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 1
+                    color: Theme.divider
+                }
+                TapHandler {
+                    id: rowTap
+                    onTapped: row.modelData.action === "plan"
+                              ? app.openCoursePicker("plan")
+                              : app.screen = row.modelData.screen
+                }
             }
         }
-    }
-
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 12
-        text: "OpenCaddie 0.1.0 · AGPL-3.0-or-later"
-        color: Theme.textMuted
-        font.family: "Inter"
-        font.pixelSize: Theme.px(10)
     }
 }

@@ -1,5 +1,6 @@
 #include "platform/PiPowerProvider.h"
 
+#include <QDir>
 #include <QFile>
 #include <QTextStream>
 
@@ -7,17 +8,73 @@
 
 namespace opencaddie::platform {
 
-PiPowerProvider::PiPowerProvider(QString brightnessPath, QObject* parent)
-    : PowerProvider(parent), m_brightnessPath(std::move(brightnessPath)) {}
+namespace {
+QString readValue(const QString &path) {
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly | QIODevice::Text)
+               ? QString::fromUtf8(file.readAll()).trimmed()
+               : QString{};
+}
+} // namespace
 
-int PiPowerProvider::batteryPercent() const {
-    // Raspberry Pi 5 has no generic battery telemetry. The production CM0
-    // carrier will replace this provider with its fuel-gauge implementation.
-    return -1;
+PiPowerProvider::PiPowerProvider(QString brightnessPath,
+                                 QString powerSupplyRoot, QObject* parent)
+    : PowerProvider(parent), m_brightnessPath(std::move(brightnessPath)),
+      m_powerSupplyRoot(std::move(powerSupplyRoot)) {
+    m_powerTimer.setInterval(30'000);
+    connect(&m_powerTimer, &QTimer::timeout, this,
+            &PiPowerProvider::refreshPower);
+    refreshPower();
+    m_powerTimer.start();
 }
 
-bool PiPowerProvider::externalPower() const { return true; }
+int PiPowerProvider::batteryPercent() const { return m_batteryPercent; }
+
+bool PiPowerProvider::externalPower() const { return m_externalPower; }
 int PiPowerProvider::brightness() const { return m_brightness; }
+
+void PiPowerProvider::refreshPower() {
+    int batteryPercent = -1;
+    bool externalPower = true;
+    bool powerTelemetryFound = false;
+    bool externalStateFound = false;
+    const QDir root(m_powerSupplyRoot);
+    for (const QString &entry : root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString base = root.filePath(entry);
+        const QString type = readValue(QDir(base).filePath(QStringLiteral("type")));
+        if (type.compare(QStringLiteral("Battery"), Qt::CaseInsensitive) == 0) {
+            bool valid = false;
+            const int capacity = readValue(
+                QDir(base).filePath(QStringLiteral("capacity"))).toInt(&valid);
+            if (valid) batteryPercent = std::clamp(capacity, 0, 100);
+            const QString status = readValue(
+                QDir(base).filePath(QStringLiteral("status")));
+            if (!status.isEmpty()) {
+                externalPower =
+                    status.compare(QStringLiteral("Charging"), Qt::CaseInsensitive) == 0 ||
+                    status.compare(QStringLiteral("Full"), Qt::CaseInsensitive) == 0;
+                externalStateFound = true;
+            }
+            powerTelemetryFound = true;
+        } else if (type.compare(QStringLiteral("Mains"), Qt::CaseInsensitive) == 0 ||
+                   type.compare(QStringLiteral("USB"), Qt::CaseInsensitive) == 0 ||
+                   type.compare(QStringLiteral("USB_C"), Qt::CaseInsensitive) == 0) {
+            bool valid = false;
+            const int online = readValue(
+                QDir(base).filePath(QStringLiteral("online"))).toInt(&valid);
+            if (valid) {
+                externalPower = online != 0;
+                externalStateFound = true;
+            }
+            powerTelemetryFound = true;
+        }
+    }
+    if (!powerTelemetryFound || !externalStateFound) externalPower = true;
+    if (batteryPercent == m_batteryPercent && externalPower == m_externalPower) return;
+    m_batteryPercent = batteryPercent;
+    m_externalPower = externalPower;
+    emit powerChanged();
+}
 
 void PiPowerProvider::setBrightness(const int percent) {
     const int bounded = std::clamp(percent, 10, 100);

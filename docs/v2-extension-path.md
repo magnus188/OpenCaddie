@@ -26,12 +26,13 @@ revocable tokens, and drain an idempotent outbox while staying offline-first.
 
 Provider interfaces accept approved official APIs only. Garmin Golf access is
 partner-dependent and write-back remains disabled unless Garmin documentation
-explicitly authorizes it. No public GolfBox handicap/round API is available;
-that provider stays disabled pending a commercial agreement. FIT, CSV, and JSON
-exchange remain the portable path.
+explicitly authorizes it. TrackMan CSV is the preferred first file importer.
+Toptracer network access and GolfBox/NGF handicap, score submission, and
+tee-time actions remain disabled pending vendor credentials and agreements.
+FIT, CSV, and JSON exchange remain the portable path. See the dated
+[integration feasibility review](integrations.md).
 
 ## OTA
 
 The CM0 carrier plan uses signed RAUC bundles with U-Boot A/B slots, boot-health
 confirmation, automatic rollback, release channels, and documented recovery.
-

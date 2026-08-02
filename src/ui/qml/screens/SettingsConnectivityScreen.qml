@@ -1,0 +1,108 @@
+import QtQuick
+import QtQuick.Controls
+import OpenCaddie
+
+Item {
+    id: root
+    anchors.fill: parent
+    property var keyboardTarget: null
+
+    TopBar {
+        id: header
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
+        title: qsTr("Connectivity and storage")
+        onBack: app.screen = "SettingsScreen"
+    }
+
+    Column {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: header.bottom
+        width: 560
+        spacing: 10
+
+        AppButton {
+            width: parent.width
+            text: network.connectedSsid.length > 0
+                  ? qsTr("Wi-Fi: %1").arg(network.connectedSsid)
+                  : qsTr("Configure Wi-Fi")
+            onClicked: app.screen = "WifiScreen"
+        }
+
+        SectionCard {
+            width: parent.width
+            height: 126
+            title: qsTr("OpenGolfMap server")
+            AppTextField {
+                anchors.fill: parent
+                text: app.openGolfMapServer
+                placeholderText: "https://maps.example"
+                onEditingFinished: app.openGolfMapServer = text
+                TapHandler {
+                    onTapped: {
+                        parent.forceActiveFocus()
+                        root.keyboardTarget = parent
+                    }
+                }
+            }
+        }
+
+        SectionCard {
+            width: parent.width
+            height: 115
+            title: qsTr("Offline course cache")
+            Slider {
+                anchors.left: parent.left
+                anchors.right: cacheValue.left
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                from: 128
+                to: 4096
+                stepSize: 128
+                value: app.cacheLimitMb
+                onMoved: app.cacheLimitMb = value
+            }
+            Text {
+                id: cacheValue
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 78
+                text: app.cacheLimitMb + " MB"
+                color: Theme.text
+                font.family: "Inter"
+                font.pixelSize: Theme.px(12)
+            }
+        }
+
+        Text {
+            width: parent.width
+            text: app.openGolfMapReachable
+                  ? qsTr("OpenGolfMap connected · offline maps ready after download")
+                  : network.internetReachable
+                    ? qsTr("OpenGolfMap server unavailable")
+                    : qsTr("Offline mode active")
+            color: app.openGolfMapReachable ? Theme.fairway : Theme.amber
+            font.family: "Inter"
+            font.pixelSize: Theme.px(12)
+        }
+    }
+
+    OnScreenKeyboard {
+        id: keyboard
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        target: root.keyboardTarget
+        visible: root.keyboardTarget !== null
+        onDone: {
+            if (root.keyboardTarget)
+                root.keyboardTarget.focus = false
+            root.keyboardTarget = null
+        }
+    }
+}

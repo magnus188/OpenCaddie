@@ -4,225 +4,258 @@ import OpenCaddie
 Item {
     id: root
     anchors.fill: parent
-    property string selectedRoundId: ""
+    property var keyboardTarget: null
+
+    Component.onCompleted: app.refreshHistory("")
+
+    function signed(value) {
+        var number = Number(value)
+        return number === 0 ? "E" : (number > 0 ? "+" : "") + number
+    }
+
+    function weatherLabel(value) {
+        if (value === "partly_cloudy")
+            return qsTr("Partly cloudy")
+        return value
+    }
+
+    function statusLabel(value) {
+        if (value === "completed")
+            return qsTr("Completed")
+        if (value === "in_progress")
+            return qsTr("In progress")
+        if (value === "abandoned")
+            return qsTr("Abandoned")
+        return value
+    }
+
+    function hasValue(value) {
+        return value !== undefined && value !== null &&
+               String(value).length > 0
+    }
+
+    function weatherSummary(round) {
+        var parts = []
+        if (hasValue(round.weatherCondition))
+            parts.push(weatherLabel(round.weatherCondition))
+        if (hasValue(round.weatherTemperatureC))
+            parts.push(Math.round(Number(round.weatherTemperatureC)) + "°C")
+        if (hasValue(round.weatherWindMps))
+            parts.push(Number(round.weatherWindMps).toFixed(1) + " m/s")
+        return parts.length > 0 ? parts.join(" · ")
+                                : qsTr("Weather not recorded")
+    }
 
     TopBar {
         id: header
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: Theme.gutter
+        anchors.rightMargin: Theme.gutter
         title: qsTr("Round history")
-        subtitle: qsTr("Search, inspect, resume, and export")
         onBack: app.screen = "WelcomeScreen"
     }
 
-    Row {
+    AppTextField {
+        id: search
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
-        anchors.bottom: parent.bottom
-        anchors.margins: 16
-        anchors.topMargin: 4
-        spacing: 14
-
-        SectionCard {
-            width: 340
-            height: parent.height
-            title: qsTr("Rounds")
-
-            AppTextField {
-                id: search
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                placeholderText: qsTr("Search course")
-                onTextChanged: app.refreshHistory(text)
-            }
-
-            ListView {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: search.bottom
-                anchors.bottom: parent.bottom
-                anchors.topMargin: 8
-                model: app.history
-                clip: true
-                spacing: 6
-
-                delegate: Rectangle {
-                    required property var modelData
-                    required property int index
-                    width: ListView.view.width
-                    height: 64
-                    radius: Theme.radius
-                    color: root.selectedRoundId === modelData.id
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
-                           : Theme.surfaceRaised
-                    border.width: 1
-                    border.color: root.selectedRoundId === modelData.id
-                                  ? Theme.fairway : Theme.border
-                    Column {
-                        anchors.left: parent.left
-                        anchors.right: status.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.margins: 10
-                        spacing: 2
-                        Text {
-                            width: parent.width
-                            text: modelData.courseName
-                            color: Theme.text
-                            font.family: "Inter"
-                            font.weight: Font.DemiBold
-                            font.pixelSize: Theme.px(14)
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            width: parent.width
-                            text: modelData.startedAt
-                            color: Theme.textMuted
-                            font.family: "Inter"
-                            font.pixelSize: Theme.px(11)
-                            elide: Text.ElideRight
-                        }
-                    }
-                    Text {
-                        id: status
-                        anchors.right: parent.right
-                        anchors.rightMargin: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.status
-                        color: modelData.status === "completed"
-                               ? Theme.fairway : Theme.amber
-                        font.family: "Inter"
-                        font.pixelSize: Theme.px(11)
-                    }
-                    TapHandler {
-                        onTapped: {
-                            root.selectedRoundId = modelData.id
-                            app.selectHistoryRound(modelData.id)
-                        }
-                    }
-                }
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        height: 48
+        placeholderText: qsTr("Search course")
+        onTextChanged: app.refreshHistory(text)
+        TapHandler {
+            onTapped: {
+                search.forceActiveFocus()
+                root.keyboardTarget = search
             }
         }
+    }
 
-        SectionCard {
-            width: parent.width - 354
-            height: parent.height
-            title: app.roundDetail.courseName || qsTr("Select a round")
-            subtitle: app.roundDetail.startedAt || qsTr("Score and statistics")
+    ListView {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: search.bottom
+        anchors.bottom: keyboard.visible ? keyboard.top : parent.bottom
+        anchors.margins: 16
+        anchors.topMargin: 8
+        anchors.bottomMargin: keyboard.visible ? 8 : 16
+        model: app.history
+        clip: true
+        spacing: 0
 
-            ListView {
-                id: detailList
+        delegate: Rectangle {
+            required property var modelData
+            required property int index
+            width: ListView.view.width
+            height: 88
+            color: historyTap.pressed
+                   ? Theme.controlPressed : "transparent"
+
+            Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Theme.divider
+            }
+
+            Rectangle {
+                anchors.left: parent.left
                 anchors.top: parent.top
-                anchors.bottom: actions.top
-                anchors.bottomMargin: 8
-                model: app.roundDetail.scores || []
-                clip: true
-                spacing: 3
+                anchors.bottom: parent.bottom
+                width: 5
+                radius: 3
+                color: modelData.status === "completed"
+                       ? Theme.fairway : Theme.amber
+            }
 
-                header: Row {
-                    width: ListView.view.width
-                    height: 30
-                    Repeater {
-                        model: [
-                            { text: qsTr("Hole"), width: 54 },
-                            { text: qsTr("Par"), width: 48 },
-                            { text: qsTr("Score"), width: 64 },
-                            { text: qsTr("Putts"), width: 58 },
-                            { text: qsTr("Pen."), width: 50 },
-                            { text: qsTr("Fairway"), width: 90 }
-                        ]
-                        Text {
-                            required property var modelData
-                            width: modelData.width
-                            height: parent.height
-                            text: modelData.text
-                            color: Theme.textMuted
-                            font.family: "Inter"
-                            font.pixelSize: Theme.px(11)
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
+            Column {
+                anchors.left: parent.left
+                anchors.leftMargin: 18
+                anchors.verticalCenter: parent.verticalCenter
+                width: 270
+                spacing: 4
+                Text {
+                    width: parent.width
+                    text: modelData.courseName
+                    color: Theme.text
+                    font.family: "Inter"
+                    font.weight: Font.Bold
+                    font.pixelSize: Theme.px(17)
+                    elide: Text.ElideRight
                 }
+                Text {
+                    width: parent.width
+                    text: String(modelData.startedAt).slice(0, 10) + " · " +
+                          qsTr("%1 holes").arg(modelData.holeCount) + " · " +
+                          root.statusLabel(modelData.status)
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(11)
+                }
+                Text {
+                    width: parent.width
+                    text: root.weatherSummary(modelData)
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(10)
+                    elide: Text.ElideRight
+                }
+            }
 
-                delegate: Rectangle {
-                    required property var modelData
-                    width: ListView.view.width
-                    height: 34
-                    radius: 4
-                    color: index % 2 ? Theme.surfaceRaised : "transparent"
-                    Row {
-                        anchors.fill: parent
-                        Repeater {
-                            model: [
-                                { text: modelData.hole, width: 54 },
-                                { text: modelData.par, width: 48 },
-                                { text: modelData.strokes, width: 64 },
-                                { text: modelData.putts || "—", width: 58 },
-                                { text: modelData.penalties || "—", width: 50 },
-                                { text: modelData.fairway || "—", width: 90 }
-                            ]
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: 320
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
+
+                Repeater {
+                    model: [
+                        { label: qsTr("Eagles"), value: modelData.eagles,
+                          color: Theme.amber },
+                        { label: qsTr("Birdies"), value: modelData.birdies,
+                          color: Theme.fairway },
+                        { label: qsTr("Pars"), value: modelData.pars,
+                          color: Theme.water }
+                    ]
+                    Item {
+                        required property var modelData
+                        width: 76
+                        height: 50
+                        Column {
+                            anchors.centerIn: parent
                             Text {
-                                required property var modelData
-                                width: modelData.width
-                                height: parent.height
-                                text: modelData.text
-                                color: Theme.text
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: modelData.value
+                                color: modelData.color
                                 font.family: "Inter"
-                                font.pixelSize: Theme.px(12)
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
+                                font.weight: Font.Bold
+                                font.pixelSize: Theme.px(18)
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: modelData.label
+                                color: Theme.textMuted
+                                font.family: "Inter"
+                                font.pixelSize: Theme.px(9)
                             }
                         }
                     }
                 }
             }
 
-            Row {
-                id: actions
-                anchors.left: parent.left
+            Column {
                 anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                spacing: 7
-                AppButton {
-                    text: qsTr("JSON")
-                    compact: true
-                    enabled: root.selectedRoundId.length > 0
-                    onClicked: app.exportRound(root.selectedRoundId, "json")
+                anchors.rightMargin: 24
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 0
+                property bool stablefordReady:
+                    modelData.scoringMode === "stableford" &&
+                    Boolean(modelData.stablefordAvailable)
+                Text {
+                    anchors.right: parent.right
+                    text: parent.stablefordReady
+                          ? qsTr("%1 pts").arg(modelData.stablefordPoints)
+                          : modelData.toParAvailable
+                            ? root.signed(modelData.toPar) : "—"
+                    color: !parent.stablefordReady &&
+                           !modelData.toParAvailable
+                           ? Theme.textMuted
+                           : parent.stablefordReady ||
+                             Number(modelData.toPar) <= 0
+                             ? Theme.fairway : Theme.amber
+                    font.family: "Inter"
+                    font.weight: Font.Bold
+                    font.pixelSize: Theme.px(28)
                 }
-                AppButton {
-                    text: qsTr("CSV")
-                    compact: true
-                    enabled: root.selectedRoundId.length > 0
-                    onClicked: app.exportRound(root.selectedRoundId, "csv")
+                Text {
+                    anchors.right: parent.right
+                    text: parent.stablefordReady
+                          ? qsTr("Gross %1").arg(modelData.gross)
+                          : root.statusLabel(modelData.status)
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(10)
                 }
-                Item { width: parent.width - 248; height: 1 }
-                AppButton {
-                    text: qsTr("Delete")
-                    compact: true
-                    variant: "danger"
-                    enabled: root.selectedRoundId.length > 0
-                    onClicked: deleteDialog.open()
+            }
+
+            TapHandler {
+                id: historyTap
+                onTapped: {
+                    root.keyboardTarget = null
+                    app.selectHistoryRound(modelData.id)
+                    app.screen = "RoundDetailScreen"
                 }
             }
         }
+
+        Text {
+            anchors.centerIn: parent
+            visible: app.history.length === 0
+            text: qsTr("No saved rounds yet")
+            color: Theme.textMuted
+            font.family: "Inter"
+            font.pixelSize: Theme.px(14)
+        }
     }
 
-    ConfirmDialog {
-        id: deleteDialog
-        title: qsTr("Delete round?")
-        bodyText: qsTr("This permanently removes the local scorecard and statistics.")
-        onConfirmed: {
-            if (app.deleteRound(root.selectedRoundId)) {
-                root.selectedRoundId = ""
-                app.selectHistoryRound("")
-            }
+    OnScreenKeyboard {
+        id: keyboard
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        target: root.keyboardTarget
+        visible: root.keyboardTarget !== null
+        onDone: {
+            if (root.keyboardTarget)
+                root.keyboardTarget.focus = false
+            root.keyboardTarget = null
         }
     }
 }

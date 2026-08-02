@@ -44,6 +44,7 @@ if(OPENCADDIE_BUILD_UI)
     add_subdirectory(src/courses)
     add_subdirectory(src/positioning)
     add_subdirectory(src/connectivity)
+    add_subdirectory(src/integrations)
     add_subdirectory(src/platform)
     add_subdirectory(src/ui)
 endif()
@@ -57,6 +58,7 @@ install(FILES
     LICENSE
     docs/architecture.md
     docs/hardware.md
+    docs/integrations.md
     docs/third-party.md
     docs/v2-extension-path.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}

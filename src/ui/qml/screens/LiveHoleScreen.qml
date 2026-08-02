@@ -1,111 +1,178 @@
 import QtQuick
-import QtQuick.Controls
 import OpenCaddie
 
-Item {
+PageScaffold {
     id: root
     anchors.fill: parent
-    property bool statsOpen: false
+    backgroundColor: Theme.focusBackground
+    property bool drawerOpen: false
+    property real swipeStartX: 0
 
-    Rectangle {
-        anchors.fill: parent
-        color: Theme.background
-    }
-
-    Column {
-        id: holeHeader
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 12
-        spacing: 0
-
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Hole %1").arg(app.currentHole)
-            color: Theme.amber
-            font.family: "Inter"
-            font.weight: Font.Bold
-            font.pixelSize: Theme.px(50)
-        }
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 186
-            height: 2
-            color: Theme.text
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Par %1    Index %2").arg(app.par).arg(app.strokeIndex)
-            color: Theme.text
-            font.family: "Inter"
-            font.weight: Font.Bold
-            font.pixelSize: Theme.px(20)
-        }
-    }
-
-    Column {
-        id: distanceColumn
+    IconButton {
+        id: menuButton
         anchors.left: parent.left
-        anchors.leftMargin: 52
         anchors.top: parent.top
-        anchors.topMargin: 132
-        width: 276
-        spacing: -4
+        anchors.leftMargin: 10
+        anchors.topMargin: 6
+        transparent: true
+        iconSource: "../../assets/icons/lucide/menu.svg"
+        iconColor: Theme.text
+        accessibleName: qsTr("Round menu")
+        onClicked: root.drawerOpen = true
+        z: 10
+    }
 
-        Repeater {
-            model: [
-                { label: qsTr("Back edge"), distance: app.backDistance,
-                  color: Theme.text, size: 48 },
-                { label: qsTr("Centre"), distance: app.centreDistance,
-                  color: Theme.fairway, size: 62 },
-                { label: qsTr("Front"), distance: app.frontDistance,
-                  color: Theme.text, size: 48 }
-            ]
-            Row {
-                required property var modelData
-                width: distanceColumn.width
-                height: modelData.size + 10
-                Text {
-                    width: 54
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.label
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.weight: Font.Medium
-                    font.pixelSize: Theme.px(11)
-                }
-                Text {
-                    width: parent.width - 54
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: app.distanceText(modelData.distance)
-                    color: modelData.color
-                    font.family: "Inter"
-                    font.weight: Font.Bold
-                    font.pixelSize: Theme.px(modelData.size)
-                    horizontalAlignment: Text.AlignRight
+    Item {
+        id: informationArea
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 500
+
+        Item {
+            id: holeHeader
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.leftMargin: 72
+            anchors.topMargin: 7
+            width: 376
+            height: 76
+
+            Text {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                text: qsTr("HOLE")
+                color: Theme.textMuted
+                font.family: "Inter"
+                font.weight: Font.DemiBold
+                font.letterSpacing: 1.6
+                font.pixelSize: Theme.px(10)
+            }
+            Text {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.topMargin: 12
+                text: app.currentHole
+                color: Theme.amber
+                font.family: "Inter"
+                font.weight: Font.Bold
+                font.pixelSize: Theme.px(50)
+            }
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 82
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 7
+                text: qsTr("PAR %1  •  INDEX %2").arg(app.par).arg(app.strokeIndex)
+                color: Theme.text
+                font.family: "Inter"
+                font.weight: Font.DemiBold
+                font.letterSpacing: 0.7
+                font.pixelSize: Theme.px(13)
+            }
+        }
+
+        Column {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.leftMargin: 72
+            anchors.topMargin: 94
+            width: 268
+            spacing: -2
+
+            Text {
+                width: parent.width
+                height: 72
+                text: app.distanceText(app.backDistance)
+                color: Theme.text
+                font.family: "Inter"
+                font.weight: Font.DemiBold
+                font.pixelSize: Theme.px(42)
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+            }
+            Text {
+                width: parent.width
+                height: 92
+                text: app.distanceText(app.centreDistance)
+                color: Theme.fairway
+                font.family: "Inter"
+                font.weight: Font.Bold
+                font.pixelSize: Theme.px(64)
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+                Behavior on color { ColorAnimation { duration: Theme.motion } }
+            }
+            Text {
+                width: parent.width
+                height: 72
+                text: app.distanceText(app.frontDistance)
+                color: Theme.text
+                font.family: "Inter"
+                font.weight: Font.DemiBold
+                font.pixelSize: Theme.px(42)
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+
+        Text {
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 72
+            anchors.bottomMargin: 32
+            width: 268
+            text: app.clubAdvice.length > 0 ? app.clubAdvice : "—"
+            color: app.clubAdvice.length > 0 ? Theme.fairway : Theme.textMuted
+            font.family: "Inter"
+            font.weight: Font.Bold
+            font.pixelSize: Theme.px(34)
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+        }
+
+        Item {
+            anchors.fill: parent
+            anchors.leftMargin: 60
+
+            DragHandler {
+                target: null
+                xAxis.enabled: true
+                yAxis.enabled: false
+                onActiveChanged: {
+                    if (active) root.swipeStartX = centroid.position.x
+                    else if (translation.x > 70) app.previousHole()
+                    else if (translation.x < -70) app.nextHole()
                 }
             }
         }
     }
 
     Rectangle {
-        id: mapWell
+        id: mapPreview
         anchors.right: parent.right
-        anchors.rightMargin: -36
         anchors.top: parent.top
-        anchors.topMargin: -6
-        width: 322
-        height: 442
-        radius: width / 2
-        color: app.darkMode ? "#1B1E1C" : "#E9EEE5"
+        anchors.bottom: parent.bottom
+        width: 306
+        color: "transparent"
+        radius: 148
         clip: true
 
-        CourseMap {
+        RadialMapGlow {
             anchors.fill: parent
-            anchors.leftMargin: 70
-            anchors.rightMargin: 44
-            anchors.topMargin: 18
-            anchors.bottomMargin: 18
+            innerColor: app.darkMode ? "rgba(47,203,99,0.14)"
+                                     : "rgba(22,123,67,0.12)"
+            middleColor: app.darkMode ? "rgba(23,54,34,0.08)"
+                                      : "rgba(47,203,99,0.04)"
+        }
+
+        CourseMap {
+            id: previewMap
+            anchors.fill: parent
+            anchors.leftMargin: 44
+            anchors.rightMargin: 12
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
             modelSource: app.mapSource
             hole: app.currentHole
             colors: app.mapColors
@@ -113,282 +180,114 @@ Item {
             playerY: app.playerY
             playerVisible: app.playerVisible
         }
-    }
 
-    Column {
-        anchors.left: parent.left
-        anchors.leftMargin: 350
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 68
-        width: 160
-        spacing: -2
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.surfaceRaised
+            opacity: 0.92
+            visible: !previewMap.ready && previewMap.errorText.length > 0
+            Text {
+                anchors.centerIn: parent
+                width: 180
+                text: previewMap.errorText
+                color: Theme.textMuted
+                font.family: "Inter"
+                font.pixelSize: Theme.px(13)
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+        }
+
         Text {
-            width: parent.width
-            text: app.clubAdvice.length > 0 ? qsTr("Club") : qsTr("Club advice")
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: 30
+            anchors.bottomMargin: 8
+            text: "© OpenStreetMap contributors"
             color: Theme.textMuted
             font.family: "Inter"
-            font.weight: Font.DemiBold
-            font.pixelSize: Theme.px(13)
-            horizontalAlignment: Text.AlignRight
+            font.pixelSize: Theme.px(7)
+            opacity: 0.78
         }
-        Text {
-            width: parent.width
-            text: app.clubAdvice.length > 0 ? app.clubAdvice : "—"
-            color: app.clubAdvice.length > 0 ? Theme.fairway : Theme.textMuted
-            font.family: "Inter"
-            font.weight: Font.Bold
-            font.pixelSize: Theme.px(36)
-            horizontalAlignment: Text.AlignRight
-        }
-        Text {
-            width: parent.width
-            text: app.clubAdvice.length > 0
-                  ? qsTr("%1 from target").arg(app.clubDelta)
-                  : qsTr("Needs fresh GPS")
-            color: Theme.textMuted
-            font.family: "Inter"
-            font.pixelSize: Theme.px(10)
-            horizontalAlignment: Text.AlignRight
-        }
-    }
 
-    Row {
-        anchors.left: parent.left
-        anchors.leftMargin: 24
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 66
-        spacing: 8
-        AppButton {
-            text: "−"
-            compact: true
-            width: 48
-            onClicked: app.changeStrokes(-1)
+        TapHandler {
+            gesturePolicy: TapHandler.ReleaseWithinBounds
+            onTapped: app.screen = "RoundMapScreen"
         }
-        Text {
-            width: 86
-            height: 48
-            text: qsTr("%1 strokes").arg(app.strokes)
-            color: Theme.text
-            font.family: "Inter"
-            font.weight: Font.Bold
-            font.pixelSize: Theme.px(15)
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
-        AppButton {
-            text: "+"
-            compact: true
-            width: 48
-            variant: "primary"
-            onClicked: app.changeStrokes(1)
-        }
-        AppButton {
-            text: qsTr("Stats")
-            compact: true
-            visible: app.showAdvancedScores
-            onClicked: root.statsOpen = true
-        }
-    }
-
-    Text {
-        anchors.left: parent.left
-        anchors.leftMargin: 24
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 53
-        width: 320
-        text: qsTr("Plays like — unavailable") + "  ·  " + app.gpsStatus +
-              (app.gpsAccuracy > 0
-               ? qsTr(" ±%1 m").arg(Math.round(app.gpsAccuracy)) : "")
-        color: Theme.textMuted
-        font.family: "Inter"
-        font.pixelSize: Theme.px(9)
-        elide: Text.ElideRight
-    }
-
-    BottomNav {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        onPrevious: app.previousHole()
-        onNext: app.nextHole()
-        onScorecard: app.screen = "ScorecardScreen"
     }
 
     Rectangle {
         anchors.fill: parent
-        color: "#88000000"
-        visible: root.statsOpen
+        color: Theme.scrim
+        opacity: root.drawerOpen ? 1 : 0
+        visible: opacity > 0
+        enabled: root.drawerOpen
         z: 20
-        TapHandler {
-            onTapped: root.statsOpen = false
-        }
+        Behavior on opacity { NumberAnimation { duration: Theme.motionSheet } }
+        TapHandler { onTapped: root.drawerOpen = false }
     }
 
     Rectangle {
-        id: statsPanel
-        anchors.right: parent.right
+        id: drawer
+        x: root.drawerOpen ? 0 : -width
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: 402
+        width: 300
         color: Theme.surface
         border.width: 1
         border.color: Theme.border
-        visible: root.statsOpen
         z: 21
+        Behavior on x { NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic } }
 
         Column {
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 10
+            anchors.margins: Theme.gutter
+            spacing: 4
 
             Row {
                 width: parent.width
+                height: 58
                 Text {
-                    width: parent.width - closeStats.width
-                    text: qsTr("Hole %1 details").arg(app.currentHole)
+                    width: parent.width - closeDrawer.width
+                    height: parent.height
+                    text: app.courseName
                     color: Theme.text
                     font.family: "Inter"
                     font.weight: Font.Bold
-                    font.pixelSize: Theme.px(22)
+                    font.pixelSize: Theme.px(20)
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
                 }
-                AppButton {
-                    id: closeStats
-                    text: qsTr("Close")
-                    compact: true
-                    onClicked: root.statsOpen = false
-                }
-            }
-
-            Row {
-                spacing: 8
-                Text {
-                    width: 88
+                IconButton {
+                    id: closeDrawer
                     anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Putts")
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(14)
-                }
-                AppButton {
-                    text: "−"
-                    compact: true
-                    onClicked: app.changePutts(-1)
-                }
-                Text {
-                    width: 44
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: app.putts
-                    color: Theme.text
-                    horizontalAlignment: Text.AlignHCenter
-                    font.family: "Inter"
-                    font.weight: Font.Bold
-                    font.pixelSize: Theme.px(18)
-                }
-                AppButton {
-                    text: "+"
-                    compact: true
-                    onClicked: app.changePutts(1)
+                    transparent: true
+                    iconSource: "../../assets/icons/lucide/x.svg"
+                    iconColor: Theme.text
+                    accessibleName: qsTr("Close menu")
+                    onClicked: root.drawerOpen = false
                 }
             }
-
-            Row {
-                spacing: 8
-                Text {
-                    width: 88
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Penalties")
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(14)
-                }
-                AppButton {
-                    text: "−"
-                    compact: true
-                    onClicked: app.changePenalties(-1)
-                }
-                Text {
-                    width: 44
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: app.penalties
-                    color: Theme.text
-                    horizontalAlignment: Text.AlignHCenter
-                    font.family: "Inter"
-                    font.weight: Font.Bold
-                    font.pixelSize: Theme.px(18)
-                }
-                AppButton {
-                    text: "+"
-                    compact: true
-                    onClicked: app.changePenalties(1)
-                }
-            }
-
-            Text {
-                text: qsTr("Fairway")
-                color: Theme.textMuted
-                font.family: "Inter"
-                font.pixelSize: Theme.px(13)
-            }
-            Row {
-                spacing: 5
-                Repeater {
-                    model: [
-                        { label: qsTr("Left"), value: "left" },
-                        { label: qsTr("Centre"), value: "centre" },
-                        { label: qsTr("Right"), value: "right" },
-                        { label: qsTr("Missed"), value: "missed" }
-                    ]
-                    AppButton {
-                        required property var modelData
-                        text: modelData.label
-                        compact: true
-                        variant: app.fairway === modelData.value
-                                 ? "primary" : "secondary"
-                        onClicked: app.setFairway(modelData.value)
-                    }
-                }
-            }
-
-            Row {
-                spacing: 10
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Green in regulation")
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(14)
-                }
-                Switch {
-                    checked: app.gir
-                    onToggled: app.setGir(checked)
-                }
-            }
-
-            Text {
-                text: qsTr("Notes")
-                color: Theme.textMuted
-                font.family: "Inter"
-                font.pixelSize: Theme.px(13)
-            }
-            AppTextField {
-                id: notesField
-                width: parent.width
-                text: app.notes
-                placeholderText: qsTr("Optional round note")
-                onEditingFinished: app.setNotes(text)
-            }
-
-            AppButton {
-                anchors.right: parent.right
-                text: qsTr("Save and close")
-                variant: "primary"
-                onClicked: {
-                    app.setNotes(notesField.text)
-                    root.statsOpen = false
-                }
-            }
+            Rectangle { width: parent.width; height: 1; color: Theme.divider }
+            AppButton { width: parent.width; text: qsTr("Enter score"); variant: "surface"; onClicked: { root.drawerOpen = false; app.screen = "HoleScoreScreen" } }
+            AppButton { width: parent.width; text: qsTr("Scorecard"); variant: "surface"; onClicked: { root.drawerOpen = false; app.screen = "ScorecardScreen" } }
+            Item { width: 1; height: 54 }
+            Rectangle { width: parent.width; height: 1; color: Theme.divider }
+            AppButton { width: parent.width; text: qsTr("Finish round"); variant: "accent"; onClicked: finishDialog.open() }
+            AppButton { width: parent.width; text: qsTr("Abandon round"); variant: "danger"; onClicked: abandonDialog.open() }
         }
+    }
+
+    ConfirmDialog {
+        id: finishDialog
+        title: qsTr("Finish round?")
+        bodyText: qsTr("The round will be saved to history.")
+        onConfirmed: app.finishRound()
+    }
+    ConfirmDialog {
+        id: abandonDialog
+        title: qsTr("Abandon round?")
+        bodyText: qsTr("The active round will be closed.")
+        onConfirmed: app.abandonRound()
     }
 }

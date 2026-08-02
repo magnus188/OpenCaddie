@@ -1,4 +1,7 @@
 add_library(opencaddie_connectivity STATIC
+    BluetoothProvider.h
+    BluezBluetoothProvider.cpp
+    MockBluetoothProvider.cpp
     NetworkManager.h
     MockNetworkManager.cpp
     NetworkManagerDbus.cpp

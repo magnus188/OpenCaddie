@@ -2,8 +2,10 @@ add_library(opencaddie_domain STATIC
     ClubRecommendation.cpp
     Geo.cpp
     HoleSelector.cpp
+    NearGreenTrigger.cpp
     Scoring.cpp
     Settings.cpp
+    Statistics.cpp
 )
 
 target_include_directories(opencaddie_domain
@@ -18,4 +20,3 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         -Wall -Wextra -Wpedantic -Wconversion -Wshadow
     )
 endif()
-

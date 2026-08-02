@@ -4,13 +4,21 @@ import OpenCaddie
 Rectangle {
     id: keyboard
     property var target
+    property bool shifted: false
+    property bool numeric: false
     signal done()
 
-    height: 204
+    height: 208
     color: Theme.surface
     border.width: 1
     border.color: Theme.border
     radius: Theme.radius
+    onVisibleChanged: {
+        if (!visible) {
+            shifted = false
+            numeric = false
+        }
+    }
 
     function insert(value) {
         if (!target)
@@ -36,12 +44,15 @@ Rectangle {
 
     Column {
         anchors.fill: parent
-        anchors.margins: 8
-        spacing: 5
+        anchors.margins: 4
+        spacing: 2
 
         Repeater {
-            model: ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
+            model: keyboard.numeric
+                   ? ["1234567890"]
+                   : ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNMÆØÅ"]
             Row {
+                id: keyRow
                 required property string modelData
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 5
@@ -49,11 +60,13 @@ Rectangle {
                     model: modelData.length
                     AppButton {
                         required property int index
-                        width: 46
-                        height: 44
+                        width: 48
+                        height: 48
                         compact: true
-                        text: modelData.charAt(index)
-                        onClicked: keyboard.insert(text.toLowerCase())
+                        variant: "surface"
+                        text: keyRow.modelData.charAt(index)
+                        onClicked: keyboard.insert(
+                            keyboard.shifted ? text : text.toLowerCase())
                     }
                 }
             }
@@ -61,21 +74,58 @@ Rectangle {
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 6
+            spacing: 5
             AppButton {
-                width: 112
+                width: 70
+                height: 48
                 compact: true
+                variant: keyboard.numeric ? "primary" : "surface"
+                text: keyboard.numeric ? "ABC" : "123"
+                onClicked: {
+                    keyboard.numeric = !keyboard.numeric
+                    keyboard.shifted = false
+                }
+            }
+            AppButton {
+                visible: !keyboard.numeric
+                width: 70
+                height: 48
+                compact: true
+                variant: keyboard.shifted ? "primary" : "surface"
+                text: "⇧"
+                onClicked: keyboard.shifted = !keyboard.shifted
+            }
+            AppButton {
+                width: 86
+                height: 48
+                compact: true
+                variant: "surface"
                 text: qsTr("Delete")
                 onClicked: keyboard.erase()
             }
+            Repeater {
+                model: [".", "-", "/", ":", "@"]
+                AppButton {
+                    required property string modelData
+                    width: 48
+                    height: 48
+                    compact: true
+                    variant: "surface"
+                    text: modelData
+                    onClicked: keyboard.insert(text)
+                }
+            }
             AppButton {
-                width: 270
+                width: 140
+                height: 48
                 compact: true
+                variant: "surface"
                 text: qsTr("Space")
                 onClicked: keyboard.insert(" ")
             }
             AppButton {
-                width: 112
+                width: 86
+                height: 48
                 compact: true
                 variant: "primary"
                 text: qsTr("Done")
@@ -84,4 +134,3 @@ Rectangle {
         }
     }
 }
-
