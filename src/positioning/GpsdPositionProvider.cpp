@@ -17,10 +17,6 @@ GpsdPositionProvider::GpsdPositionProvider(QString host, const quint16 port,
     connect(&m_reconnect, &QTimer::timeout, this, &GpsdPositionProvider::start);
     connect(&m_socket, &QTcpSocket::connected, this, [this] {
         m_socket.write("?WATCH={\"enable\":true,\"json\":true};\n");
-        emit diagnosticsChanged({
-            {QStringLiteral("provider"), name()},
-            {QStringLiteral("state"), QStringLiteral("connected")},
-        });
     });
     connect(&m_socket, &QTcpSocket::readyRead, this,
             &GpsdPositionProvider::readMessages);
@@ -28,11 +24,6 @@ GpsdPositionProvider::GpsdPositionProvider(QString host, const quint16 port,
             &GpsdPositionProvider::scheduleReconnect);
     connect(&m_socket, &QTcpSocket::errorOccurred, this,
             [this](QAbstractSocket::SocketError) {
-                emit diagnosticsChanged({
-                    {QStringLiteral("provider"), name()},
-                    {QStringLiteral("state"), QStringLiteral("error")},
-                    {QStringLiteral("message"), m_socket.errorString()},
-                });
                 scheduleReconnect();
             });
 }
@@ -86,12 +77,6 @@ void GpsdPositionProvider::parseMessage(const QByteArray& line) {
     fix.valid = mode >= 2 && std::isfinite(latitude) &&
                 std::isfinite(longitude) && timestamp.isValid();
     emit positionChanged(fix);
-    emit diagnosticsChanged({
-        {QStringLiteral("provider"), name()},
-        {QStringLiteral("state"), QStringLiteral("fix")},
-        {QStringLiteral("mode"), mode},
-        {QStringLiteral("accuracyMetres"), accuracy},
-    });
 }
 
 void GpsdPositionProvider::scheduleReconnect() {
@@ -99,4 +84,3 @@ void GpsdPositionProvider::scheduleReconnect() {
 }
 
 } // namespace opencaddie::positioning
-

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 PageScaffold {
@@ -36,7 +37,6 @@ PageScaffold {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Find courses")
-        onBack: app.screen = "CourseLibraryScreen"
     }
 
     Row {
@@ -91,7 +91,7 @@ PageScaffold {
             compact: true
             variant: "accent"
             visible: !network.internetReachable
-            onClicked: app.screen = "WifiScreen"
+            onClicked: app.navigateTo("WifiScreen")
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
@@ -113,6 +113,8 @@ PageScaffold {
         anchors.rightMargin: Theme.gutter
         anchors.bottomMargin: 12
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollIndicator.vertical: ScrollIndicator { }
         model: app.searchResults
 
         delegate: Item {

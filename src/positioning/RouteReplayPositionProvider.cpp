@@ -16,14 +16,8 @@ RouteReplayPositionProvider::RouteReplayPositionProvider(QString csvPath,
 }
 
 void RouteReplayPositionProvider::start() {
-    if (m_samples.empty() && !load()) {
-        emit diagnosticsChanged({
-            {QStringLiteral("provider"), name()},
-            {QStringLiteral("state"), QStringLiteral("error")},
-            {QStringLiteral("message"), tr("Could not read simulator GPS route.")},
-        });
+    if (m_samples.empty() && !load())
         return;
-    }
     m_index = 0;
     m_elapsed.restart();
     m_timer.start();
@@ -93,4 +87,3 @@ void RouteReplayPositionProvider::tick() {
 }
 
 } // namespace opencaddie::positioning
-

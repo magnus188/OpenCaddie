@@ -12,7 +12,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Map appearance")
-        onBack: app.screen = "SettingsScreen"
     }
 
     Grid {

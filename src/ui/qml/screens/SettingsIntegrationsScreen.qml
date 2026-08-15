@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 Item {
@@ -30,7 +31,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Data sources")
-        onBack: app.screen = "SettingsScreen"
     }
 
     ListView {
@@ -43,6 +43,8 @@ Item {
         model: app.integrations
         spacing: 0
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollIndicator.vertical: ScrollIndicator { }
 
         delegate: Rectangle {
             required property var modelData

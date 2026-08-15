@@ -6,10 +6,6 @@ namespace opencaddie::positioning {
 
 void NoFixPositionProvider::start() {
     emit positionChanged({{}, 0.0, std::chrono::system_clock::now(), false});
-    emit diagnosticsChanged({
-        {QStringLiteral("provider"), name()},
-        {QStringLiteral("state"), QStringLiteral("no-fix")},
-    });
 }
 
 void NoFixPositionProvider::stop() {}

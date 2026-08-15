@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 PageScaffold {
@@ -6,7 +7,15 @@ PageScaffold {
     anchors.fill: parent
     backgroundColor: Theme.focusBackground
     property bool drawerOpen: false
-    property real swipeStartX: 0
+
+    function signedDelta(value) {
+        var rounded = Math.round(value);
+        if (rounded > 0)
+            return "+" + rounded;
+        if (rounded < 0)
+            return "−" + Math.abs(rounded);
+        return "0";
+    }
 
     IconButton {
         id: menuButton
@@ -22,198 +31,328 @@ PageScaffold {
         z: 10
     }
 
-    Item {
-        id: informationArea
-        anchors.left: parent.left
+    HoleHeader {
+        id: holeHeader
+        anchors.horizontalCenter: pages.horizontalCenter
         anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: 500
+        anchors.topMargin: 2
+        hole: app.currentHole
+        par: app.par
+        strokeIndex: app.strokeIndex
+        z: 5
+    }
 
+    SwipeView {
+        id: pages
+        anchors.left: parent.left
+        anchors.right: liveMap.left
+        anchors.top: holeHeader.bottom
+        anchors.bottom: bottomNav.top
+        clip: true
+
+        // Only the information pane participates in the carousel. The map is
+        // a single, fixed sibling so it does not move during a page swipe.
         Item {
-            id: holeHeader
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.leftMargin: 72
-            anchors.topMargin: 7
-            width: 376
-            height: 76
+            id: distancePage
 
-            Text {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                text: qsTr("HOLE")
-                color: Theme.textMuted
-                font.family: "Inter"
-                font.weight: Font.DemiBold
-                font.letterSpacing: 1.6
-                font.pixelSize: Theme.px(10)
-            }
-            Text {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.topMargin: 12
-                text: app.currentHole
-                color: Theme.amber
-                font.family: "Inter"
-                font.weight: Font.Bold
-                font.pixelSize: Theme.px(50)
-            }
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: 82
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 7
-                text: qsTr("PAR %1  •  INDEX %2").arg(app.par).arg(app.strokeIndex)
-                color: Theme.text
-                font.family: "Inter"
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.7
-                font.pixelSize: Theme.px(13)
+            Item {
+                id: informationArea
+                anchors.fill: parent
+
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: 4
+                    width: 268
+                    spacing: -6
+
+                    Text {
+                        width: parent.width
+                        height: 66
+                        text: app.distanceText(app.backDistance)
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(40)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Text {
+                        width: parent.width
+                        height: 84
+                        text: app.distanceText(app.centreDistance)
+                        color: Theme.fairway
+                        font.family: "Inter"
+                        font.weight: Font.Bold
+                        font.pixelSize: Theme.px(60)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.motion
+                            }
+                        }
+                    }
+                    Text {
+                        width: parent.width
+                        height: 66
+                        text: app.distanceText(app.frontDistance)
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(40)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
             }
         }
 
-        Column {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.leftMargin: 72
-            anchors.topMargin: 94
-            width: 268
-            spacing: -2
-
-            Text {
-                width: parent.width
-                height: 72
-                text: app.distanceText(app.backDistance)
-                color: Theme.text
-                font.family: "Inter"
-                font.weight: Font.DemiBold
-                font.pixelSize: Theme.px(42)
-                horizontalAlignment: Text.AlignRight
-                verticalAlignment: Text.AlignVCenter
-            }
-            Text {
-                width: parent.width
-                height: 92
-                text: app.distanceText(app.centreDistance)
-                color: Theme.fairway
-                font.family: "Inter"
-                font.weight: Font.Bold
-                font.pixelSize: Theme.px(64)
-                horizontalAlignment: Text.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                Behavior on color { ColorAnimation { duration: Theme.motion } }
-            }
-            Text {
-                width: parent.width
-                height: 72
-                text: app.distanceText(app.frontDistance)
-                color: Theme.text
-                font.family: "Inter"
-                font.weight: Font.DemiBold
-                font.pixelSize: Theme.px(42)
-                horizontalAlignment: Text.AlignRight
-                verticalAlignment: Text.AlignVCenter
-            }
-        }
-
-        Text {
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: 72
-            anchors.bottomMargin: 32
-            width: 268
-            text: app.clubAdvice.length > 0 ? app.clubAdvice : "—"
-            color: app.clubAdvice.length > 0 ? Theme.fairway : Theme.textMuted
-            font.family: "Inter"
-            font.weight: Font.Bold
-            font.pixelSize: Theme.px(34)
-            horizontalAlignment: Text.AlignRight
-            elide: Text.ElideRight
-        }
-
+        // Page 2 — conditions and advice.
         Item {
-            anchors.fill: parent
-            anchors.leftMargin: 60
+            id: conditionsPage
 
-            DragHandler {
-                target: null
-                xAxis.enabled: true
-                yAxis.enabled: false
-                onActiveChanged: {
-                    if (active) root.swipeStartX = centroid.position.x
-                    else if (translation.x > 70) app.previousHole()
-                    else if (translation.x < -70) app.nextHole()
+            Item {
+                id: conditionsInfo
+                anchors.fill: parent
+
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - 96
+                    visible: !app.weatherAvailable
+                    text: qsTr("No weather data for this round")
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(18)
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                }
+
+                Item {
+                    anchors.fill: parent
+                    visible: app.weatherAvailable
+
+                    Row {
+                        id: weatherContent
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: 4
+                        spacing: 28
+
+                        Column {
+                            id: factorColumn
+                            width: 140
+                            spacing: 8
+
+                            Item {
+                                width: parent.width
+                                height: 62
+                                Text {
+                                    width: 72
+                                    height: parent.height
+                                    text: root.signedDelta(app.playsLikeWindDelta)
+                                    color: Theme.text
+                                    font.family: "Inter"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: Theme.px(42)
+                                    horizontalAlignment: Text.AlignRight
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                Image {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 84
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 42
+                                    height: 36
+                                    source: "../../assets/icons/figma/weather-wind.svg"
+                                    sourceSize: Qt.size(96, 84)
+                                    fillMode: Image.PreserveAspectFit
+                                    rotation: app.windRelativeDegrees + 135
+                                    smooth: true
+                                }
+                            }
+
+                            Item {
+                                width: parent.width
+                                height: 62
+                                Text {
+                                    width: 72
+                                    height: parent.height
+                                    text: root.signedDelta(app.playsLikeTemperatureDelta)
+                                    color: Theme.text
+                                    font.family: "Inter"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: Theme.px(42)
+                                    horizontalAlignment: Text.AlignRight
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                Image {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 88
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 36
+                                    height: 36
+                                    source: "../../assets/icons/figma/weather-direction.svg"
+                                    sourceSize: Qt.size(84, 84)
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                }
+                            }
+
+                            Item {
+                                width: parent.width
+                                height: 62
+                                Text {
+                                    width: 72
+                                    height: parent.height
+                                    text: root.signedDelta(app.playsLikeConditionDelta)
+                                    color: Theme.text
+                                    font.family: "Inter"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: Theme.px(42)
+                                    horizontalAlignment: Text.AlignRight
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                Image {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 88
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 36
+                                    height: 37
+                                    source: "../../assets/icons/figma/weather-rain.svg"
+                                    sourceSize: Qt.size(84, 86)
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: !app.playsLikeAvailable
+                                text: qsTr("Waiting for GPS")
+                                color: Theme.textMuted
+                                font.family: "Inter"
+                                font.pixelSize: Theme.px(13)
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+
+                        Item {
+                            width: 160
+                            height: factorColumn.height
+
+                            Column {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width
+                                spacing: 12
+
+                                Column {
+                                    width: parent.width
+                                    spacing: 0
+                                    Text {
+                                        width: parent.width
+                                        text: qsTr("Plays like")
+                                        color: Theme.text
+                                        font.family: "Inter"
+                                        font.weight: Font.Bold
+                                        font.pixelSize: Theme.px(21)
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    Text {
+                                        width: parent.width
+                                        height: 58
+                                        text: app.playsLikeAvailable ? app.distanceText(app.playsLikeDistance) : "—"
+                                        color: Theme.amber
+                                        font.family: "Inter"
+                                        font.weight: Font.Bold
+                                        font.pixelSize: Theme.px(44)
+                                        minimumPixelSize: Theme.px(24)
+                                        fontSizeMode: Text.Fit
+                                        horizontalAlignment: Text.AlignRight
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
+
+                                Column {
+                                    width: parent.width
+                                    spacing: 0
+                                    Text {
+                                        width: parent.width
+                                        text: qsTr("Club")
+                                        color: Theme.text
+                                        font.family: "Inter"
+                                        font.weight: Font.Bold
+                                        font.pixelSize: Theme.px(21)
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    Text {
+                                        width: parent.width
+                                        height: 58
+                                        text: app.clubAdvice.length > 0 ? app.clubAdvice : "—"
+                                        color: Theme.amber
+                                        font.family: "Inter"
+                                        font.weight: Font.Bold
+                                        font.pixelSize: Theme.px(44)
+                                        minimumPixelSize: Theme.px(21)
+                                        fontSizeMode: Text.Fit
+                                        horizontalAlignment: Text.AlignRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    Rectangle {
-        id: mapPreview
+    StaticMapPreview {
+        id: liveMap
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        anchors.bottom: bottomNav.top
         width: 306
-        color: "transparent"
-        radius: 148
-        clip: true
+        onOpenRequested: app.navigateTo("RoundMapScreen")
+    }
 
-        RadialMapGlow {
-            anchors.fill: parent
-            innerColor: app.darkMode ? "rgba(47,203,99,0.14)"
-                                     : "rgba(22,123,67,0.12)"
-            middleColor: app.darkMode ? "rgba(23,54,34,0.08)"
-                                      : "rgba(47,203,99,0.04)"
-        }
+    BottomNav {
+        id: bottomNav
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 14
+        anchors.rightMargin: 14
+        anchors.bottomMargin: 6
+        pageCount: pages.count
+        currentPage: pages.currentIndex
+        onPrevious: app.previousHole()
+        onNext: lastHole ? finishDialog.open() : app.nextHole()
+        onPageSelected: page => pages.currentIndex = page
+    }
 
-        CourseMap {
-            id: previewMap
-            anchors.fill: parent
-            anchors.leftMargin: 44
-            anchors.rightMargin: 12
-            anchors.topMargin: 10
-            anchors.bottomMargin: 10
-            modelSource: app.mapSource
-            hole: app.currentHole
-            colors: app.mapColors
-            playerX: app.playerX
-            playerY: app.playerY
-            playerVisible: app.playerVisible
-        }
+    // Keep the required attribution close to the static map without competing
+    // with the now-explicit navigation controls.
+    Text {
+        anchors.right: parent.right
+        anchors.bottom: bottomNav.top
+        anchors.rightMargin: 8
+        anchors.bottomMargin: 2
+        text: "© OpenStreetMap contributors"
+        color: Theme.textMuted
+        font.family: "Inter"
+        font.pixelSize: Theme.px(7)
+        opacity: 0.68
+        z: 2
+    }
 
-        Rectangle {
-            anchors.fill: parent
-            color: Theme.surfaceRaised
-            opacity: 0.92
-            visible: !previewMap.ready && previewMap.errorText.length > 0
-            Text {
-                anchors.centerIn: parent
-                width: 180
-                text: previewMap.errorText
-                color: Theme.textMuted
-                font.family: "Inter"
-                font.pixelSize: Theme.px(13)
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-            }
-        }
-
-        Text {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.rightMargin: 30
-            anchors.bottomMargin: 8
-            text: "© OpenStreetMap contributors"
-            color: Theme.textMuted
-            font.family: "Inter"
-            font.pixelSize: Theme.px(7)
-            opacity: 0.78
-        }
-
-        TapHandler {
-            gesturePolicy: TapHandler.ReleaseWithinBounds
-            onTapped: app.screen = "RoundMapScreen"
-        }
+    ScorePromptBanner {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 8
+        z: 15
     }
 
     Rectangle {
@@ -223,8 +362,14 @@ PageScaffold {
         visible: opacity > 0
         enabled: root.drawerOpen
         z: 20
-        Behavior on opacity { NumberAnimation { duration: Theme.motionSheet } }
-        TapHandler { onTapped: root.drawerOpen = false }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.motionSheet
+            }
+        }
+        TapHandler {
+            onTapped: root.drawerOpen = false
+        }
     }
 
     Rectangle {
@@ -237,7 +382,12 @@ PageScaffold {
         border.width: 1
         border.color: Theme.border
         z: 21
-        Behavior on x { NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic } }
+        Behavior on x {
+            NumberAnimation {
+                duration: Theme.motionSheet
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Column {
             anchors.fill: parent
@@ -268,13 +418,59 @@ PageScaffold {
                     onClicked: root.drawerOpen = false
                 }
             }
-            Rectangle { width: parent.width; height: 1; color: Theme.divider }
-            AppButton { width: parent.width; text: qsTr("Enter score"); variant: "surface"; onClicked: { root.drawerOpen = false; app.screen = "HoleScoreScreen" } }
-            AppButton { width: parent.width; text: qsTr("Scorecard"); variant: "surface"; onClicked: { root.drawerOpen = false; app.screen = "ScorecardScreen" } }
-            Item { width: 1; height: 54 }
-            Rectangle { width: parent.width; height: 1; color: Theme.divider }
-            AppButton { width: parent.width; text: qsTr("Finish round"); variant: "accent"; onClicked: finishDialog.open() }
-            AppButton { width: parent.width; text: qsTr("Abandon round"); variant: "danger"; onClicked: abandonDialog.open() }
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: Theme.divider
+            }
+            AppButton {
+                width: parent.width
+                text: qsTr("Enter score")
+                variant: "surface"
+                onClicked: {
+                    root.drawerOpen = false;
+                    app.navigateTo("HoleScoreScreen");
+                }
+            }
+            AppButton {
+                width: parent.width
+                text: qsTr("Open full map")
+                variant: "surface"
+                onClicked: {
+                    root.drawerOpen = false;
+                    app.navigateTo("RoundMapScreen");
+                }
+            }
+            AppButton {
+                width: parent.width
+                text: qsTr("Scorecard")
+                variant: "surface"
+                onClicked: {
+                    root.drawerOpen = false;
+                    app.navigateTo("ScorecardScreen");
+                }
+            }
+            Item {
+                width: 1
+                height: 54
+            }
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: Theme.divider
+            }
+            AppButton {
+                width: parent.width
+                text: qsTr("Finish round")
+                variant: "accent"
+                onClicked: finishDialog.open()
+            }
+            AppButton {
+                width: parent.width
+                text: qsTr("Abandon round")
+                variant: "danger"
+                onClicked: abandonDialog.open()
+            }
         }
     }
 
@@ -282,12 +478,15 @@ PageScaffold {
         id: finishDialog
         title: qsTr("Finish round?")
         bodyText: qsTr("The round will be saved to history.")
+        confirmText: qsTr("Finish")
         onConfirmed: app.finishRound()
     }
     ConfirmDialog {
         id: abandonDialog
         title: qsTr("Abandon round?")
         bodyText: qsTr("The active round will be closed.")
+        destructive: true
+        confirmText: qsTr("Abandon")
         onConfirmed: app.abandonRound()
     }
 }

@@ -1,10 +1,10 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 Item {
     id: root
     anchors.fill: parent
-    property var keyboardTarget: null
 
     Component.onCompleted: app.refreshHistory("")
 
@@ -54,7 +54,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Round history")
-        onBack: app.screen = "WelcomeScreen"
     }
 
     AppTextField {
@@ -67,24 +66,21 @@ Item {
         height: 48
         placeholderText: qsTr("Search course")
         onTextChanged: app.refreshHistory(text)
-        TapHandler {
-            onTapped: {
-                search.forceActiveFocus()
-                root.keyboardTarget = search
-            }
-        }
     }
 
     ListView {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: search.bottom
-        anchors.bottom: keyboard.visible ? keyboard.top : parent.bottom
+        anchors.bottom: parent.bottom
         anchors.margins: 16
         anchors.topMargin: 8
-        anchors.bottomMargin: keyboard.visible ? 8 : 16
+        anchors.bottomMargin: KeyboardController.active
+                              ? KeyboardController.keyboardHeight + 8 : 16
         model: app.history
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollIndicator.vertical: ScrollIndicator { }
         spacing: 0
 
         delegate: Rectangle {
@@ -226,9 +222,9 @@ Item {
             TapHandler {
                 id: historyTap
                 onTapped: {
-                    root.keyboardTarget = null
+                    KeyboardController.close()
                     app.selectHistoryRound(modelData.id)
-                    app.screen = "RoundDetailScreen"
+                    app.navigateTo("RoundDetailScreen")
                 }
             }
         }
@@ -243,19 +239,4 @@ Item {
         }
     }
 
-    OnScreenKeyboard {
-        id: keyboard
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        target: root.keyboardTarget
-        visible: root.keyboardTarget !== null
-        onDone: {
-            if (root.keyboardTarget)
-                root.keyboardTarget.focus = false
-            root.keyboardTarget = null
-        }
-    }
 }

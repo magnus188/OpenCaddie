@@ -7,7 +7,6 @@ Item {
     anchors.fill: parent
     property string selectedSsid: ""
     property bool hiddenNetwork: false
-    property var keyboardTarget: null
 
     TopBar {
         id: header
@@ -20,7 +19,6 @@ Item {
         subtitle: network.connectedSsid.length > 0
                   ? qsTr("Connected to %1").arg(network.connectedSsid)
                   : qsTr("Not connected")
-        onBack: app.screen = "SettingsConnectivityScreen"
     }
 
     AppButton {
@@ -37,10 +35,11 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
-        anchors.bottom: keyboard.visible ? keyboard.top : parent.bottom
+        anchors.bottom: parent.bottom
         anchors.margins: 16
         anchors.topMargin: 4
-        anchors.bottomMargin: keyboard.visible ? 8 : 16
+        anchors.bottomMargin: KeyboardController.active
+                              ? KeyboardController.keyboardHeight + 8 : 16
         spacing: 14
 
         SectionCard {
@@ -51,6 +50,8 @@ Item {
                 anchors.fill: parent
                 model: network.networks
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollIndicator.vertical: ScrollIndicator { }
                 spacing: 0
                 delegate: Rectangle {
                     required property var modelData
@@ -101,7 +102,7 @@ Item {
                             root.selectedSsid = modelData.ssid
                             ssid.text = modelData.ssid
                             password.forceActiveFocus()
-                            root.keyboardTarget = password
+                            KeyboardController.open(password, false)
                         }
                     }
                 }
@@ -120,16 +121,12 @@ Item {
                     width: parent.width
                     placeholderText: qsTr("Network name")
                     enabled: root.hiddenNetwork
-                    onActiveFocusChanged: if (activeFocus)
-                                              root.keyboardTarget = this
                 }
                 AppTextField {
                     id: password
                     width: parent.width
                     placeholderText: qsTr("Password")
                     echoMode: TextInput.Password
-                    onActiveFocusChanged: if (activeFocus)
-                                              root.keyboardTarget = this
                 }
                 Row {
                     spacing: 8
@@ -140,7 +137,8 @@ Item {
                         font.family: "Inter"
                         font.pixelSize: Theme.px(13)
                     }
-                    Switch {
+                    AppSwitch {
+                        accessibleName: qsTr("Hidden network")
                         checked: root.hiddenNetwork
                         onToggled: root.hiddenNetwork = checked
                     }
@@ -155,7 +153,7 @@ Item {
                             network.connectNetwork(ssid.text, password.text,
                                                    root.hiddenNetwork)
                             password.text = ""
-                            root.keyboardTarget = null
+                            KeyboardController.close()
                         }
                     }
                     AppButton {
@@ -177,19 +175,4 @@ Item {
         }
     }
 
-    OnScreenKeyboard {
-        id: keyboard
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        target: root.keyboardTarget
-        visible: root.keyboardTarget !== null
-        onDone: {
-            if (root.keyboardTarget)
-                root.keyboardTarget.focus = false
-            root.keyboardTarget = null
-        }
-    }
 }

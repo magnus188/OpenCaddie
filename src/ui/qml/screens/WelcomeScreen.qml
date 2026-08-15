@@ -116,7 +116,7 @@ PageScaffold {
                     accessibleName: row.modelData.label
                     onClicked: row.modelData.action === "plan"
                                ? app.openCoursePicker("plan")
-                               : app.screen = row.modelData.screen
+                               : app.navigateTo(row.modelData.screen)
                 }
                 Rectangle {
                     anchors.left: parent.left
@@ -129,7 +129,7 @@ PageScaffold {
                     id: rowTap
                     onTapped: row.modelData.action === "plan"
                               ? app.openCoursePicker("plan")
-                              : app.screen = row.modelData.screen
+                              : app.navigateTo(row.modelData.screen)
                 }
             }
         }

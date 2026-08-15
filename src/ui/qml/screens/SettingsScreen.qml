@@ -12,7 +12,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Settings")
-        onBack: app.screen = "WelcomeScreen"
     }
 
     Column {
@@ -43,10 +42,6 @@ Item {
                 {
                     title: qsTr("Data sources"),
                     screen: "SettingsIntegrationsScreen"
-                },
-                {
-                    title: qsTr("Privacy and diagnostics"),
-                    screen: "SettingsPrivacyScreen"
                 }
             ]
 
@@ -75,7 +70,7 @@ Item {
                     iconSource: "../../assets/icons/lucide/chevron-right.svg"
                     iconColor: Theme.fairway
                     accessibleName: modelData.title
-                    onClicked: app.screen = modelData.screen
+                    onClicked: app.navigateTo(modelData.screen)
                 }
                 Rectangle {
                     anchors.left: parent.left
@@ -86,7 +81,7 @@ Item {
                 }
                 TapHandler {
                     id: settingTap
-                    onTapped: app.screen = modelData.screen
+                    onTapped: app.navigateTo(modelData.screen)
                 }
             }
         }

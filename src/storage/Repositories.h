@@ -67,6 +67,10 @@ struct ActiveRound {
     int courseHandicap = 0;
     domain::ScoringMode scoringMode = domain::ScoringMode::StrokePlay;
     int currentHole = 1;
+    std::optional<double> weatherTemperatureC;
+    std::optional<double> weatherWindMps;
+    std::optional<int> weatherWindDirectionDegrees;
+    QString weatherCondition;
 };
 
 class RoundRepository {

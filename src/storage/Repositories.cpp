@@ -252,20 +252,30 @@ std::optional<ActiveRound> RoundRepository::active() const {
     QSqlQuery query(m_database);
     if (!query.exec(QStringLiteral(
             "SELECT r.id,p.id,r.course_slug,r.course_name,r.hole_count,"
-            "r.course_handicap,r.scoring_mode,r.current_hole "
+            "r.course_handicap,r.scoring_mode,r.current_hole,"
+            "r.weather_temperature_c,r.weather_wind_mps,"
+            "r.weather_wind_direction_deg,r.weather_condition "
             "FROM rounds r JOIN participants p ON p.round_id=r.id "
             "WHERE r.status='in_progress' ORDER BY r.started_at DESC LIMIT 1")) ||
         !query.next()) {
         return std::nullopt;
     }
-    return ActiveRound{query.value(0).toString(),
-                       query.value(1).toString(),
-                       query.value(2).toString(),
-                       query.value(3).toString(),
-                       query.value(4).toInt(),
-                       query.value(5).toInt(),
-                       scoringMode(query.value(6).toString()),
-                       query.value(7).toInt()};
+    ActiveRound round{query.value(0).toString(),
+                      query.value(1).toString(),
+                      query.value(2).toString(),
+                      query.value(3).toString(),
+                      query.value(4).toInt(),
+                      query.value(5).toInt(),
+                      scoringMode(query.value(6).toString()),
+                      query.value(7).toInt()};
+    if (!query.value(8).isNull())
+        round.weatherTemperatureC = query.value(8).toDouble();
+    if (!query.value(9).isNull())
+        round.weatherWindMps = query.value(9).toDouble();
+    if (!query.value(10).isNull())
+        round.weatherWindDirectionDegrees = query.value(10).toInt();
+    round.weatherCondition = query.value(11).toString();
+    return round;
 }
 
 std::optional<ActiveRound> RoundRepository::start(const RoundStart &start) {
@@ -329,9 +339,14 @@ std::optional<ActiveRound> RoundRepository::start(const RoundStart &start) {
         m_database.rollback();
         return std::nullopt;
     }
-    return ActiveRound{
+    ActiveRound started{
         roundId,         participantId,        start.courseSlug,  start.courseName,
         start.holeCount, start.courseHandicap, start.scoringMode, 1};
+    started.weatherTemperatureC = start.weatherTemperatureC;
+    started.weatherWindMps = start.weatherWindMps;
+    started.weatherWindDirectionDegrees = start.weatherWindDirectionDegrees;
+    started.weatherCondition = start.weatherCondition;
+    return started;
 }
 
 bool RoundRepository::saveScore(const ActiveRound &round,

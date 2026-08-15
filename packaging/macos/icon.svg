@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="OpenCaddie">
+  <title>OpenCaddie</title>
+  <!--
+    Apple macOS app-icon grid: 1024 canvas, 824 body inset by 100 on every side,
+    corner radius 22.5% of the body. Regenerate the .icns with
+    tools/make-macos-icon.sh after editing.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E221F"/>
+      <stop offset="1" stop-color="#0B0D0C"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="245" y1="726" x2="750" y2="221" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#167B43"/>
+      <stop offset="1" stop-color="#2FCB63"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#tile)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="none"
+        stroke="#2B302C" stroke-width="2"/>
+  <g transform="translate(512 512) scale(7.9) translate(-32 -32)">
+    <path d="M47.383 20.528 A20 20 0 1 0 47.383 43.472"
+          fill="none" stroke="url(#arc)" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="51" cy="32" r="6" fill="#2FCB63"/>
+  </g>
+</svg>

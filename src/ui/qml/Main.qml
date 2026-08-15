@@ -21,22 +21,37 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         source: "screens/" + app.screen + ".qml"
         focus: true
-        opacity: status === Loader.Ready ? 1 : 0
-        scale: (app.screen === "RoundMapScreen" ||
-                app.screen === "CoursePlannerMapScreen") && status === Loader.Ready
-               ? 1 : 0.992
-        Behavior on opacity {
-            NumberAnimation { duration: Theme.motion; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
+        transform: Translate { id: screenSlide }
+        onLoaded: screenEnter.restart()
+
+        // Slide direction follows the back-stack: push arrives from the right,
+        // pop from the left, flow resets fade in place. Transform-only, so it
+        // stays cheap on the Pi's EGLFS stack.
+        ParallelAnimation {
+            id: screenEnter
+            NumberAnimation {
+                target: screenSlide
+                property: "x"
+                from: app.navigationDirection * 32
+                to: 0
+                duration: Theme.motion
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                target: screenLoader
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Theme.motion
+                easing.type: Easing.OutCubic
+            }
         }
     }
 
     Connections {
         target: app
-        function onScoreEntryRequested(hole) {
-            app.screen = "HoleScoreScreen"
+        function onScreenChanged() {
+            KeyboardController.close()
         }
     }
 
@@ -51,10 +66,33 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
+    OnScreenKeyboard {
+        id: keyboardHost
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        target: KeyboardController.target
+        visible: KeyboardController.active
+        z: 95
+        onDone: {
+            KeyboardController.commitRequested()
+            KeyboardController.close()
+        }
+    }
+
+    Connections {
+        target: KeyboardController
+        function onTargetChanged() {
+            keyboardHost.numeric = KeyboardController.numeric
+        }
+    }
+
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 16
+        anchors.top: parent.top
+        anchors.topMargin: Theme.statusHeight + 8
         width: Math.min(messageText.implicitWidth + 36, parent.width - 48)
         height: 46
         radius: 23
@@ -75,5 +113,13 @@ ApplicationWindow {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
         }
+    }
+
+    // Skipped for --screenshot runs so captured screens stay deterministic.
+    Loader {
+        anchors.fill: parent
+        active: !screenshotMode
+        sourceComponent: SplashOverlay {}
+        z: 200
     }
 }

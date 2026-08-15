@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import OpenCaddie
 
 Item {
@@ -13,7 +12,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Display and language")
-        onBack: app.screen = "SettingsScreen"
     }
 
     Column {
@@ -53,7 +51,7 @@ Item {
             width: parent.width
             height: 92
             title: qsTr("Text size")
-            Slider {
+            AppSlider {
                 anchors.left: parent.left
                 anchors.right: valueLabel.left
                 anchors.rightMargin: 12
@@ -80,7 +78,7 @@ Item {
             width: parent.width
             height: 92
             title: qsTr("Brightness")
-            Slider {
+            AppSlider {
                 anchors.left: parent.left
                 anchors.right: brightnessValue.left
                 anchors.rightMargin: 12

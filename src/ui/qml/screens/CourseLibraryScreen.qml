@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 PageScaffold {
@@ -25,7 +26,6 @@ PageScaffold {
         anchors.rightMargin: Theme.gutter
         title: app.coursePickerMode === "plan"
                ? qsTr("Course analyzer") : qsTr("Play golf")
-        onBack: app.screen = "WelcomeScreen"
     }
 
     ListView {
@@ -40,98 +40,63 @@ PageScaffold {
         model: app.courses
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollIndicator.vertical: ScrollIndicator { }
 
-        delegate: Item {
+        delegate: Rectangle {
             id: row
             required property var modelData
-            property real dragStartX: 0
             width: ListView.view.width
             height: 62
+            color: rowTap.pressed ? Theme.controlPressed : Theme.background
 
-            Rectangle {
-                anchors.right: parent.right
-                width: Math.max(96, -content.x)
-                height: parent.height
-                color: Theme.danger
-                visible: row.modelData.slug !== "opencaddie-demo"
-                Text {
-                    anchors.centerIn: parent
-                    text: qsTr("Delete")
-                    color: "#FFFFFF"
-                    font.family: "Inter"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: Theme.px(15)
-                }
-                TapHandler { onTapped: root.requestDelete(row.modelData) }
+            Text {
+                anchors.left: parent.left
+                anchors.right: actions.left
+                anchors.leftMargin: 14
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                text: row.modelData.name
+                color: Theme.text
+                font.family: "Inter"
+                font.weight: Font.Medium
+                font.pixelSize: Theme.px(17)
+                elide: Text.ElideRight
             }
 
-            Rectangle {
-                id: content
-                x: 0
-                width: parent.width
-                height: parent.height
-                color: rowTap.pressed ? Theme.controlPressed : Theme.background
+            Row {
+                id: actions
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: chevron.left
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: row.modelData.name
-                    color: Theme.text
-                    font.family: "Inter"
-                    font.weight: Font.Medium
-                    font.pixelSize: Theme.px(17)
-                    elide: Text.ElideRight
+                IconButton {
+                    visible: row.modelData.slug !== "opencaddie-demo"
+                    transparent: true
+                    iconSource: "../../assets/icons/lucide/trash-2.svg"
+                    iconColor: Theme.danger
+                    accessibleName: qsTr("Delete %1").arg(row.modelData.name)
+                    onClicked: root.requestDelete(row.modelData)
                 }
                 IconButton {
-                    id: chevron
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
                     transparent: true
                     iconSource: "../../assets/icons/lucide/chevron-right.svg"
                     iconColor: Theme.textMuted
                     accessibleName: qsTr("Open %1").arg(row.modelData.name)
                     onClicked: app.activateCourse(row.modelData.slug)
                 }
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: 1
-                    color: Theme.divider
-                }
-                TapHandler {
-                    id: rowTap
-                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                    onTapped: {
-                        if (content.x < -1) content.x = 0
-                        else app.activateCourse(row.modelData.slug)
-                    }
-                }
-                DragHandler {
-                    target: null
-                    enabled: row.modelData.slug !== "opencaddie-demo"
-                    xAxis.enabled: true
-                    yAxis.enabled: false
-                    onActiveChanged: {
-                        if (active) row.dragStartX = content.x
-                        else if (content.x < -row.width * 0.72) {
-                            content.x = 0
-                            root.requestDelete(row.modelData)
-                        } else {
-                            content.x = content.x < -48 ? -96 : 0
-                        }
-                    }
-                    onTranslationChanged: {
-                        content.x = Math.max(-row.width,
-                                             Math.min(0, row.dragStartX + translation.x))
-                    }
-                }
-                Behavior on x {
-                    NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
-                }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Theme.divider
+            }
+
+            TapHandler {
+                id: rowTap
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onTapped: app.activateCourse(row.modelData.slug)
             }
         }
     }
@@ -146,13 +111,15 @@ PageScaffold {
         anchors.bottomMargin: 18
         text: qsTr("Search for more courses")
         variant: "surface"
-        onClicked: app.screen = "CourseSearchScreen"
+        onClicked: app.navigateTo("CourseSearchScreen")
     }
 
     ConfirmDialog {
         id: removeDialog
         title: qsTr("Delete course?")
         bodyText: root.pendingName
+        destructive: true
+        confirmText: qsTr("Delete")
         onConfirmed: app.removeCourse(root.pendingSlug, root.pendingVersion)
     }
 }

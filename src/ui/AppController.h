@@ -4,6 +4,7 @@
 #include "courses/CourseProvider.h"
 #include "domain/HoleSelector.h"
 #include "domain/NearGreenTrigger.h"
+#include "domain/PlaysLike.h"
 #include "platform/PowerProvider.h"
 #include "positioning/PositionProvider.h"
 #include "storage/Database.h"
@@ -12,6 +13,7 @@
 #include <QMap>
 #include <QObject>
 #include <QSet>
+#include <QStringList>
 #include <QTimer>
 #include <QUrl>
 #include <QVariantList>
@@ -22,6 +24,8 @@ namespace opencaddie::ui {
 class AppController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString screen READ screen WRITE setScreen NOTIFY screenChanged)
+    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY screenChanged)
+    Q_PROPERTY(int navigationDirection READ navigationDirection NOTIFY screenChanged)
     Q_PROPERTY(QVariantList courses READ courses NOTIFY coursesChanged)
     Q_PROPERTY(
         QVariantList searchResults READ searchResults NOTIFY searchResultsChanged)
@@ -71,6 +75,19 @@ class AppController final : public QObject {
     Q_PROPERTY(double backDistance READ backDistance NOTIFY liveChanged)
     Q_PROPERTY(QString clubAdvice READ clubAdvice NOTIFY liveChanged)
     Q_PROPERTY(QString clubDelta READ clubDelta NOTIFY liveChanged)
+    Q_PROPERTY(bool playsLikeAvailable READ playsLikeAvailable NOTIFY liveChanged)
+    Q_PROPERTY(double playsLikeDistance READ playsLikeDistance NOTIFY liveChanged)
+    Q_PROPERTY(int playsLikeWindDelta READ playsLikeWindDelta NOTIFY liveChanged)
+    Q_PROPERTY(int playsLikeTemperatureDelta READ playsLikeTemperatureDelta
+                   NOTIFY liveChanged)
+    Q_PROPERTY(int playsLikeConditionDelta READ playsLikeConditionDelta
+                   NOTIFY liveChanged)
+    Q_PROPERTY(int windRelativeDegrees READ windRelativeDegrees NOTIFY liveChanged)
+    Q_PROPERTY(bool weatherAvailable READ weatherAvailable NOTIFY roundChanged)
+    Q_PROPERTY(double weatherWindMps READ weatherWindMps NOTIFY roundChanged)
+    Q_PROPERTY(
+        double weatherTemperatureC READ weatherTemperatureC NOTIFY roundChanged)
+    Q_PROPERTY(QString weatherCondition READ weatherCondition NOTIFY roundChanged)
     Q_PROPERTY(QString gpsStatus READ gpsStatus NOTIFY liveChanged)
     Q_PROPERTY(double gpsAccuracy READ gpsAccuracy NOTIFY liveChanged)
     Q_PROPERTY(double playerX READ playerX NOTIFY liveChanged)
@@ -92,8 +109,6 @@ class AppController final : public QObject {
                    setRecommendationBias NOTIFY settingsChanged)
     Q_PROPERTY(
         int cacheLimitMb READ cacheLimitMb WRITE setCacheLimitMb NOTIFY settingsChanged)
-    Q_PROPERTY(bool diagnosticLogging READ diagnosticLogging WRITE setDiagnosticLogging
-                   NOTIFY settingsChanged)
     Q_PROPERTY(bool celebrationsEnabled READ celebrationsEnabled WRITE
                    setCelebrationsEnabled NOTIFY settingsChanged)
     Q_PROPERTY(
@@ -118,6 +133,10 @@ class AppController final : public QObject {
 
     [[nodiscard]] QString screen() const;
     void setScreen(const QString &screen);
+    [[nodiscard]] bool canGoBack() const;
+    [[nodiscard]] int navigationDirection() const;
+    Q_INVOKABLE void navigateTo(const QString &screen);
+    Q_INVOKABLE void goBack();
     [[nodiscard]] QVariantList courses() const;
     [[nodiscard]] QVariantList searchResults() const;
     [[nodiscard]] QVariantList clubs() const;
@@ -158,6 +177,16 @@ class AppController final : public QObject {
     [[nodiscard]] double backDistance() const;
     [[nodiscard]] QString clubAdvice() const;
     [[nodiscard]] QString clubDelta() const;
+    [[nodiscard]] bool playsLikeAvailable() const;
+    [[nodiscard]] double playsLikeDistance() const;
+    [[nodiscard]] int playsLikeWindDelta() const;
+    [[nodiscard]] int playsLikeTemperatureDelta() const;
+    [[nodiscard]] int playsLikeConditionDelta() const;
+    [[nodiscard]] int windRelativeDegrees() const;
+    [[nodiscard]] bool weatherAvailable() const;
+    [[nodiscard]] double weatherWindMps() const;
+    [[nodiscard]] double weatherTemperatureC() const;
+    [[nodiscard]] QString weatherCondition() const;
     [[nodiscard]] QString gpsStatus() const;
     [[nodiscard]] double gpsAccuracy() const;
     [[nodiscard]] double playerX() const;
@@ -182,8 +211,6 @@ class AppController final : public QObject {
     void setRecommendationBias(double displayUnits);
     [[nodiscard]] int cacheLimitMb() const;
     void setCacheLimitMb(int megabytes);
-    [[nodiscard]] bool diagnosticLogging() const;
-    void setDiagnosticLogging(bool enabled);
     [[nodiscard]] bool celebrationsEnabled() const;
     void setCelebrationsEnabled(bool enabled);
     [[nodiscard]] int brightness() const;
@@ -289,6 +316,9 @@ class AppController final : public QObject {
     bool saveCurrentScore();
     void celebrateCurrentHole();
     void rebuildScorecard();
+    static bool isAllowedScreen(const QString &screen);
+    void resetNavigation(QStringList stack, const QString &current);
+    domain::WeatherConditions activeWeather() const;
     HoleNavigation currentNavigation() const;
     domain::HoleDefinition currentDefinition() const;
     double toMetres(double displayUnits) const;
@@ -313,6 +343,8 @@ class AppController final : public QObject {
     QTimer m_messageTimer;
 
     QString m_screen = QStringLiteral("WelcomeScreen");
+    QStringList m_backStack;
+    int m_navigationDirection = 0;
     QVariantList m_courses;
     QVariantList m_searchResults;
     QVariantList m_clubValues;
@@ -341,6 +373,9 @@ class AppController final : public QObject {
     double m_backDistance = 0.0;
     QString m_clubAdvice;
     QString m_clubDelta;
+    domain::PlaysLikeBreakdown m_playsLike;
+    bool m_playsLikeAvailable = false;
+    int m_windRelativeDegrees = 0;
     QString m_gpsStatus;
     double m_gpsAccuracy = 0.0;
     double m_playerX = 0.0;
@@ -356,7 +391,6 @@ class AppController final : public QObject {
     int m_courseHandicap = 0;
     double m_recommendationBiasMetres = 0.0;
     int m_cacheLimitMb = 1024;
-    bool m_diagnosticLogging = false;
     bool m_celebrationsEnabled = true;
     QVariantMap m_mapColors;
     QString m_openGolfMapServer = QStringLiteral("http://localhost:3000");

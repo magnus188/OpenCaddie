@@ -3,6 +3,7 @@ add_library(opencaddie_domain STATIC
     Geo.cpp
     HoleSelector.cpp
     NearGreenTrigger.cpp
+    PlaysLike.cpp
     Scoring.cpp
     Settings.cpp
     Statistics.cpp

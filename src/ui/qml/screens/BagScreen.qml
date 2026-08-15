@@ -39,7 +39,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("My bag")
-        onBack: app.screen = "WelcomeScreen"
     }
 
     Row {
@@ -64,6 +63,8 @@ Item {
                 anchors.bottomMargin: 8
                 model: app.clubs
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollIndicator.vertical: ScrollIndicator { }
                 spacing: 0
 
                 delegate: Rectangle {
@@ -169,6 +170,7 @@ Item {
                     width: parent.width
                     placeholderText: "145"
                     inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    numericKeyboard: true
                 }
                 Row {
                     spacing: 10
@@ -179,8 +181,9 @@ Item {
                         font.family: "Inter"
                         font.pixelSize: Theme.px(13)
                     }
-                    Switch {
+                    AppSwitch {
                         id: clubEnabled
+                        accessibleName: qsTr("Use for recommendations")
                         checked: true
                     }
                 }
@@ -229,6 +232,8 @@ Item {
         id: removeDialog
         title: qsTr("Remove club?")
         bodyText: qsTr("The club will no longer be available for recommendations.")
+        destructive: true
+        confirmText: qsTr("Remove")
         onConfirmed: {
             app.removeClub(root.selectedId)
             root.selectedId = ""

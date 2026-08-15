@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import OpenCaddie
 
 Item {
@@ -60,10 +59,9 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Statistics")
-        onBack: app.screen = "WelcomeScreen"
     }
 
-    ComboBox {
+    AppSelectSheet {
         id: courseFilter
         anchors.left: parent.left
         anchors.top: header.bottom
@@ -83,36 +81,6 @@ Item {
             return courses
         }
         onActivated: app.refreshStatistics(currentValue)
-
-        contentItem: Text {
-            leftPadding: 4
-            rightPadding: 28
-            text: courseFilter.displayText
-            color: Theme.text
-            font.family: "Inter"
-            font.weight: Font.DemiBold
-            font.pixelSize: Theme.px(14)
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-        }
-        indicator: Text {
-            x: courseFilter.width - width - 6
-            anchors.verticalCenter: parent.verticalCenter
-            text: "⌄"
-            color: Theme.fairway
-            font.family: "Inter"
-            font.pixelSize: Theme.px(18)
-        }
-        background: Rectangle {
-            color: "transparent"
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: 1
-                color: courseFilter.activeFocus ? Theme.fairway : Theme.divider
-            }
-        }
     }
 
     Text {
