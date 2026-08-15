@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 Item {
@@ -82,7 +83,6 @@ Item {
                   (app.roundDetail.tee ? " · " + app.roundDetail.tee : "") +
                   (app.roundDetail.status
                    ? " · " + root.statusLabel(app.roundDetail.status) : "")
-        onBack: app.screen = "HistoryScreen"
     }
 
     Row {
@@ -259,6 +259,8 @@ Item {
                 anchors.bottomMargin: 6
                 model: app.roundDetail.scores || []
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollIndicator.vertical: ScrollIndicator { }
                 spacing: 0
 
                 header: Row {
@@ -383,9 +385,11 @@ Item {
         id: deleteDialog
         title: qsTr("Delete round?")
         bodyText: qsTr("This permanently removes the local scorecard and statistics.")
+        destructive: true
+        confirmText: qsTr("Delete")
         onConfirmed: {
             if (app.deleteRound(app.roundDetail.id))
-                app.screen = "HistoryScreen"
+                app.goBack()
         }
     }
 }

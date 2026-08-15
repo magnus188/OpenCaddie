@@ -1,55 +1,140 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
+// Hole navigation uses destination numbers at the edges; the centered dots
+// belong only to the information carousel.
 Item {
     id: nav
-    signal previous()
-    signal next()
-    signal scorecard()
 
-    implicitHeight: 58
+    property int pageCount: 1
+    property int currentPage: 0
+    property bool lastHole: app.currentHole >= app.holeCount
 
-    AppButton {
+    signal previous
+    signal next
+    signal pageSelected(int page)
+
+    implicitHeight: Theme.navigationHeight
+
+    HoleNavButton {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        text: qsTr("Previous")
-        compact: true
-        enabled: app.currentHole > 1
+        targetHole: app.currentHole - 1
+        reverse: true
+        visible: app.currentHole > 1
+        accessibleName: qsTr("Previous hole")
         onClicked: nav.previous()
     }
 
     Row {
         anchors.centerIn: parent
-        spacing: 8
+        spacing: -6
+
         Repeater {
-            model: 3
-            Rectangle {
+            model: nav.pageCount
+
+            Button {
                 required property int index
-                width: index === 1 ? 34 : 10
-                height: 10
-                radius: 5
-                color: index === 1 ? Theme.fairway : Theme.border
+
+                width: 42
+                height: Theme.touch
+                padding: 0
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Page %1").arg(index + 1)
+                onClicked: nav.pageSelected(index)
+
+                contentItem: Item {
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 10
+                        height: 10
+                        radius: 5
+                        color: index === nav.currentPage ? Theme.fairway : Theme.surfaceRaised
+                        border.width: index === nav.currentPage ? 0 : 1
+                        border.color: Theme.textMuted
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.motionFast
+                            }
+                        }
+                    }
+                }
+
+                background: null
             }
         }
     }
 
-    AppButton {
-        anchors.right: nextButton.left
-        anchors.rightMargin: 8
-        anchors.verticalCenter: parent.verticalCenter
-        text: qsTr("Scorecard")
-        compact: true
-        onClicked: nav.scorecard()
-    }
-
-    AppButton {
-        id: nextButton
+    HoleNavButton {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text: app.currentHole === app.holeCount ? qsTr("Finish") : qsTr("Next")
-        variant: "primary"
-        compact: true
+        targetHole: app.currentHole + 1
+        completed: nav.lastHole
+        accessibleName: nav.lastHole ? qsTr("Finish round") : qsTr("Next hole")
         onClicked: nav.next()
     }
-}
 
+    component HoleNavButton: Button {
+        id: control
+
+        property int targetHole: 1
+        property bool reverse: false
+        property bool completed: false
+        property string accessibleName
+
+        width: 94
+        height: Theme.touch
+        padding: 0
+        opacity: enabled ? 1 : 0.32
+        Accessible.role: Accessible.Button
+        Accessible.name: accessibleName
+
+        contentItem: Row {
+            anchors.centerIn: parent
+            spacing: 8
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: control.reverse && !control.completed
+                text: "‹"
+                color: Theme.text
+                font.family: "Inter"
+                font.pixelSize: Theme.px(30)
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: control.enabled && !control.completed
+                text: control.targetHole
+                color: Theme.text
+                font.family: "Inter"
+                font.weight: Font.Bold
+                font.pixelSize: Theme.px(20)
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !control.reverse
+                text: control.completed ? "✓" : "›"
+                color: control.completed ? Theme.fairway : Theme.text
+                font.family: "Inter"
+                font.pixelSize: Theme.px(control.completed ? 20 : 30)
+            }
+        }
+
+        background: Rectangle {
+            radius: height / 2
+            color: control.down ? Theme.controlPressed : Theme.surface
+            border.width: 1
+            border.color: control.completed ? Theme.fairway : Theme.border
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.motionFast
+                }
+            }
+        }
+    }
+}

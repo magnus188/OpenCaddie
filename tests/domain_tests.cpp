@@ -2,6 +2,7 @@
 #include "domain/Geo.h"
 #include "domain/HoleSelector.h"
 #include "domain/NearGreenTrigger.h"
+#include "domain/PlaysLike.h"
 #include "domain/Scoring.h"
 #include "domain/Settings.h"
 #include "domain/Statistics.h"
@@ -137,6 +138,60 @@ int main() {
           "saved score permanently suppresses the current hole");
     check(scoreTrigger.update(2, 25.0, true, false),
           "manual hole changes reset near-green trigger state");
+
+    const GeoPoint bearingOrigin{59.0, 10.0};
+    checkNear(initialBearingDegrees(bearingOrigin, {59.01, 10.0}), 0.0, 0.1,
+              "bearing due north is zero");
+    checkNear(initialBearingDegrees(bearingOrigin, {59.0, 10.01}), 90.0, 0.5,
+              "bearing due east is ninety degrees");
+    checkNear(initialBearingDegrees(bearingOrigin, {58.99, 10.0}), 180.0, 0.1,
+              "bearing due south is one-eighty");
+    checkNear(initialBearingDegrees(bearingOrigin, {59.0, 9.99}), 270.0, 0.5,
+              "bearing due west is two-seventy");
+
+    const WeatherConditions calm{};
+    checkNear(computePlaysLike(150.0, 0.0, calm).totalMetres(), 150.0, 0.001,
+              "no weather leaves the distance unchanged");
+    check(!computePlaysLike(150.0, 0.0, calm).hasAdjustments(),
+          "no weather reports no adjustments");
+
+    WeatherConditions windy;
+    windy.windSpeedMps = 5.0;
+    windy.windFromDegrees = 0;
+    const auto headwind = computePlaysLike(200.0, 0.0, windy);
+    check(headwind.windMetres > 0.0, "headwind plays longer");
+    checkNear(headwind.windMetres, 200.0 * 5.0 * 0.010, 0.01,
+              "headwind magnitude follows the factor");
+    windy.windFromDegrees = 180;
+    const auto tailwind = computePlaysLike(200.0, 0.0, windy);
+    check(tailwind.windMetres < 0.0, "tailwind plays shorter");
+    checkNear(tailwind.windMetres, -headwind.windMetres / 2.0, 0.01,
+              "tailwind helps half as much as headwind hurts");
+    windy.windFromDegrees = 90;
+    checkNear(computePlaysLike(200.0, 0.0, windy).windMetres, 0.0, 0.01,
+              "pure crosswind has no distance effect");
+
+    WeatherConditions cold;
+    cold.temperatureC = 0.0;
+    checkNear(computePlaysLike(200.0, 0.0, cold).temperatureMetres,
+              200.0 * 20.0 * 0.0013, 0.01, "cold air plays longer");
+    cold.temperatureC = 30.0;
+    check(computePlaysLike(200.0, 0.0, cold).temperatureMetres < 0.0,
+          "warm air plays shorter");
+
+    WeatherConditions wet;
+    wet.condition = "rain";
+    checkNear(computePlaysLike(200.0, 0.0, wet).conditionMetres, 3.0, 0.01,
+              "rain adds a fixed share of the base distance");
+    wet.condition = "partly_cloudy";
+    checkNear(computePlaysLike(200.0, 0.0, wet).conditionMetres, 0.0, 0.001,
+              "dry conditions add nothing");
+
+    WeatherConditions gale;
+    gale.windSpeedMps = 60.0;
+    gale.windFromDegrees = 180;
+    check(computePlaysLike(50.0, 0.0, gale).totalMetres() >= 0.0,
+          "plays-like distance never goes negative");
 
     Settings settings;
     check(!validateSettings(settings), "default settings are valid");

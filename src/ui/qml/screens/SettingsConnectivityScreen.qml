@@ -1,11 +1,9 @@
 import QtQuick
-import QtQuick.Controls
 import OpenCaddie
 
 Item {
     id: root
     anchors.fill: parent
-    property var keyboardTarget: null
 
     TopBar {
         id: header
@@ -15,7 +13,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Connectivity and storage")
-        onBack: app.screen = "SettingsScreen"
     }
 
     Column {
@@ -29,7 +26,7 @@ Item {
             text: network.connectedSsid.length > 0
                   ? qsTr("Wi-Fi: %1").arg(network.connectedSsid)
                   : qsTr("Configure Wi-Fi")
-            onClicked: app.screen = "WifiScreen"
+            onClicked: app.navigateTo("WifiScreen")
         }
 
         SectionCard {
@@ -41,12 +38,6 @@ Item {
                 text: app.openGolfMapServer
                 placeholderText: "https://maps.example"
                 onEditingFinished: app.openGolfMapServer = text
-                TapHandler {
-                    onTapped: {
-                        parent.forceActiveFocus()
-                        root.keyboardTarget = parent
-                    }
-                }
             }
         }
 
@@ -54,7 +45,7 @@ Item {
             width: parent.width
             height: 115
             title: qsTr("Offline course cache")
-            Slider {
+            AppSlider {
                 anchors.left: parent.left
                 anchors.right: cacheValue.left
                 anchors.rightMargin: 12
@@ -90,19 +81,4 @@ Item {
         }
     }
 
-    OnScreenKeyboard {
-        id: keyboard
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        target: root.keyboardTarget
-        visible: root.keyboardTarget !== null
-        onDone: {
-            if (root.keyboardTarget)
-                root.keyboardTarget.focus = false
-            root.keyboardTarget = null
-        }
-    }
 }

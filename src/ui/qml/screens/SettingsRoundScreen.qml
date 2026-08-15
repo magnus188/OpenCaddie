@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import OpenCaddie
 
 Item {
@@ -14,7 +13,6 @@ Item {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Round and scoring")
-        onBack: app.screen = "SettingsScreen"
     }
 
     Column {
@@ -119,10 +117,11 @@ Item {
                     font.family: "Inter"
                     font.pixelSize: Theme.px(14)
                 }
-                Switch {
+                AppSwitch {
                     anchors.right: parent.right
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
+                    accessibleName: modelData.label
                     checked: modelData.checked
                     onToggled: {
                         if (modelData.key === "advanced")
@@ -140,7 +139,7 @@ Item {
             width: parent.width
             height: 105
             title: qsTr("Club advice bias")
-            Slider {
+            AppSlider {
                 anchors.left: parent.left
                 anchors.right: biasValue.left
                 anchors.rightMargin: 14

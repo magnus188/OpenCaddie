@@ -4,6 +4,8 @@ import OpenCaddie
 
 TextField {
     id: field
+    // Opens the shared on-screen keyboard in numeric mode when true.
+    property bool numericKeyboard: false
     implicitHeight: Theme.touch
     leftPadding: 14
     rightPadding: 14
@@ -20,6 +22,22 @@ TextField {
         border.color: field.activeFocus ? Theme.fairway : Theme.border
         Behavior on border.color {
             ColorAnimation { duration: Theme.motionFast }
+        }
+    }
+
+    TapHandler {
+        enabled: field.enabled
+        onTapped: {
+            field.forceActiveFocus()
+            KeyboardController.open(field, field.numericKeyboard)
+        }
+    }
+
+    Connections {
+        target: KeyboardController
+        function onCommitRequested() {
+            if (KeyboardController.target === field)
+                field.accepted()
         }
     }
 }

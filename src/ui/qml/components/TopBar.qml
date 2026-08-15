@@ -6,6 +6,9 @@ Item {
     property string title
     property string subtitle
     property bool showBack: true
+    // When true (default) the back button pops the app back-stack; the back()
+    // signal still fires first for screens that need side effects.
+    property bool autoBack: true
     signal back()
 
     implicitHeight: Theme.navigationHeight
@@ -19,7 +22,11 @@ Item {
         accessibleName: qsTr("Back")
         transparent: true
         visible: bar.showBack
-        onClicked: bar.back()
+        onClicked: {
+            bar.back()
+            if (bar.autoBack)
+                app.goBack()
+        }
     }
 
     Column {

@@ -1,4 +1,4 @@
-set_source_files_properties(qml/Theme.qml
+set_source_files_properties(qml/Theme.qml qml/KeyboardController.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 set_source_files_properties(assets/fonts/OFL.txt
@@ -24,24 +24,46 @@ set_target_properties(opencaddie PROPERTIES
         "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts/OFL.txt"
 )
 
+# Dock and Finder icon for the macOS development bundle. Regenerate the .icns
+# from packaging/macos/icon.svg with tools/make-macos-icon.sh.
+if(APPLE)
+    set(opencaddie_icns "${PROJECT_SOURCE_DIR}/packaging/macos/OpenCaddie.icns")
+    set_source_files_properties(${opencaddie_icns} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+        QT_EXCLUDE_FROM_TRANSLATION TRUE
+    )
+    target_sources(opencaddie PRIVATE ${opencaddie_icns})
+    set_target_properties(opencaddie PROPERTIES
+        MACOSX_BUNDLE_ICON_FILE "OpenCaddie.icns"
+    )
+endif()
+
 qt_add_qml_module(opencaddie
     URI OpenCaddie
     VERSION 1.0
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
+        qml/KeyboardController.qml
         qml/components/AppButton.qml
+        qml/components/AppSelectSheet.qml
+        qml/components/AppSlider.qml
+        qml/components/AppSwitch.qml
         qml/components/AppTextField.qml
         qml/components/BottomNav.qml
+        qml/components/BrandLockup.qml
         qml/components/ConfirmDialog.qml
+        qml/components/HoleHeader.qml
         qml/components/IconButton.qml
         qml/components/MetricCard.qml
-        qml/components/MapToolButton.qml
         qml/components/OnScreenKeyboard.qml
         qml/components/PageScaffold.qml
         qml/components/RadialMapGlow.qml
         qml/components/ScoreCelebrationOverlay.qml
+        qml/components/ScorePromptBanner.qml
         qml/components/SectionCard.qml
+        qml/components/SplashOverlay.qml
+        qml/components/StaticMapPreview.qml
         qml/components/TopBar.qml
         qml/components/SystemStatusBar.qml
         qml/screens/BagScreen.qml
@@ -60,13 +82,13 @@ qt_add_qml_module(opencaddie
         qml/screens/SettingsDisplayScreen.qml
         qml/screens/SettingsIntegrationsScreen.qml
         qml/screens/SettingsMapScreen.qml
-        qml/screens/SettingsPrivacyScreen.qml
         qml/screens/SettingsRoundScreen.qml
         qml/screens/SettingsScreen.qml
         qml/screens/StatsScreen.qml
         qml/screens/WelcomeScreen.qml
         qml/screens/WifiScreen.qml
     RESOURCES
+        assets/brand/mark.svg
         assets/demo/manifest.json
         assets/demo/navigation.json
         assets/demo/home-render-model.json
@@ -84,27 +106,42 @@ qt_add_qml_module(opencaddie
         assets/icons/measure.svg
         assets/icons/reset.svg
         assets/icons/rotate.svg
+        assets/icons/figma/weather-direction.svg
+        assets/icons/figma/weather-rain.svg
+        assets/icons/figma/weather-wind.svg
         assets/icons/lucide/LICENSE.txt
         assets/icons/lucide/battery-charging.svg
+        assets/icons/lucide/battery-charging-dark.svg
         assets/icons/lucide/battery-full.svg
+        assets/icons/lucide/battery-full-dark.svg
         assets/icons/lucide/battery-low.svg
+        assets/icons/lucide/battery-low-dark.svg
         assets/icons/lucide/battery-medium.svg
+        assets/icons/lucide/battery-medium-dark.svg
         assets/icons/lucide/bluetooth.svg
+        assets/icons/lucide/bluetooth-dark.svg
         assets/icons/lucide/check.svg
         assets/icons/lucide/chevron-left.svg
+        assets/icons/lucide/cloud-rain.svg
         assets/icons/lucide/chevron-right.svg
         assets/icons/lucide/menu.svg
         assets/icons/lucide/minus.svg
         assets/icons/lucide/navigation.svg
         assets/icons/lucide/plug-zap.svg
+        assets/icons/lucide/plug-zap-dark.svg
         assets/icons/lucide/plus.svg
         assets/icons/lucide/ruler.svg
         assets/icons/lucide/search.svg
+        assets/icons/lucide/thermometer.svg
         assets/icons/lucide/trash-2.svg
         assets/icons/lucide/undo-2.svg
         assets/icons/lucide/wifi-high.svg
+        assets/icons/lucide/wifi-high-dark.svg
         assets/icons/lucide/wifi-low.svg
+        assets/icons/lucide/wifi-low-dark.svg
         assets/icons/lucide/wifi.svg
+        assets/icons/lucide/wifi-dark.svg
+        assets/icons/lucide/wind-arrow.svg
         assets/icons/lucide/x.svg
 )
 

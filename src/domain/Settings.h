@@ -16,11 +16,9 @@ struct Settings {
     int cacheLimitMegabytes = 1024;
     double recommendationBiasMetres = 0.0;
     bool automaticHoleAdvance = true;
-    bool diagnosticsLogging = false;
     std::string openGolfMapServer = "https://opengolfmap.example";
 };
 
 std::optional<std::string> validateSettings(const Settings& settings);
 
 } // namespace opencaddie::domain
-

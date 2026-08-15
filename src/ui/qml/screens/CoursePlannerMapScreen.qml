@@ -9,6 +9,8 @@ PageScaffold {
     property bool routeDone: false
     property real pinchStartZoom: 1
     property real pinchStartRotation: 0
+    property real panStartX: 0
+    property real panStartY: 0
     property var planHoles: app.coursePlan.holes || []
     property var selectedData: findHole(app.plannerHole)
 
@@ -63,8 +65,6 @@ PageScaffold {
         metric: app.metric
         measurementFromPlayer: false
         measurementToTarget: false
-        panX: 0
-        panY: 0
         rotationDegrees: 0
         clip: true
 
@@ -83,6 +83,22 @@ PageScaffold {
                 var points = courseMap.measurementPoints.slice(0)
                 points.push({ x: point.x, y: point.y })
                 courseMap.measurementPoints = points
+            }
+        }
+
+        DragHandler {
+            target: null
+            minimumPointCount: 1
+            maximumPointCount: 1
+            onActiveChanged: {
+                if (active) {
+                    root.panStartX = courseMap.panX
+                    root.panStartY = courseMap.panY
+                }
+            }
+            onTranslationChanged: {
+                courseMap.panX = root.panStartX + translation.x
+                courseMap.panY = root.panStartY + translation.y
             }
         }
 
@@ -136,7 +152,7 @@ PageScaffold {
         iconSource: "../../assets/icons/lucide/chevron-left.svg"
         iconColor: Theme.text
         accessibleName: qsTr("Back")
-        onClicked: app.screen = "CoursePlannerScreen"
+        onClicked: app.goBack()
         z: 10
     }
 
@@ -178,6 +194,27 @@ PageScaffold {
         z: 10
         Behavior on rotation {
             NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
+        }
+    }
+
+    Column {
+        anchors.right: parent.right
+        anchors.rightMargin: 14
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 8
+        z: 10
+
+        IconButton {
+            iconSource: "../../assets/icons/lucide/plus.svg"
+            iconColor: Theme.text
+            accessibleName: qsTr("Zoom in")
+            onClicked: courseMap.zoom *= 1.2
+        }
+        IconButton {
+            iconSource: "../../assets/icons/lucide/minus.svg"
+            iconColor: Theme.text
+            accessibleName: qsTr("Zoom out")
+            onClicked: courseMap.zoom /= 1.2
         }
     }
 

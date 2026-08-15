@@ -8,6 +8,8 @@
 namespace opencaddie::domain {
 
 double haversineMetres(const GeoPoint& from, const GeoPoint& to);
+// Initial great-circle bearing, degrees clockwise from true north, [0, 360).
+double initialBearingDegrees(const GeoPoint& from, const GeoPoint& to);
 std::pair<double, double> projectToLocal(const GeoPoint& point,
                                         const LocalProjection& projection);
 GeoPoint unprojectFromLocal(double x, double y,

@@ -5,24 +5,29 @@ Item {
     id: root
     height: Theme.statusHeight
 
+    function themedIcon(name) {
+        return "../../assets/icons/lucide/" + name +
+               (app.darkMode ? "-dark.svg" : ".svg")
+    }
+
     function wifiIcon() {
         if (network.connectedSignalStrength < 35)
-            return "../../assets/icons/lucide/wifi-low.svg"
+            return themedIcon("wifi-low")
         if (network.connectedSignalStrength < 70)
-            return "../../assets/icons/lucide/wifi-high.svg"
-        return "../../assets/icons/lucide/wifi.svg"
+            return themedIcon("wifi-high")
+        return themedIcon("wifi")
     }
 
     function batteryIcon() {
         if (power.batteryPercent < 0)
-            return "../../assets/icons/lucide/plug-zap.svg"
+            return themedIcon("plug-zap")
         if (power.externalPower)
-            return "../../assets/icons/lucide/battery-charging.svg"
+            return themedIcon("battery-charging")
         if (power.batteryPercent < 35)
-            return "../../assets/icons/lucide/battery-low.svg"
+            return themedIcon("battery-low")
         if (power.batteryPercent < 75)
-            return "../../assets/icons/lucide/battery-medium.svg"
-        return "../../assets/icons/lucide/battery-full.svg"
+            return themedIcon("battery-medium")
+        return themedIcon("battery-full")
     }
 
     Row {
@@ -31,39 +36,39 @@ Item {
         height: parent.height
         spacing: 2
 
-        IconButton {
+        Image {
             width: 22
             height: 22
-            padding: 3
-            transparent: true
-            iconSource: "../../assets/icons/lucide/bluetooth.svg"
-            iconColor: Theme.text
+            source: root.themedIcon("bluetooth")
+            sourceSize: Qt.size(16, 16)
+            fillMode: Image.Pad
             visible: bluetooth.connected
-            accessibleName: qsTr("Bluetooth connected")
+            Accessible.role: Accessible.StaticText
+            Accessible.name: qsTr("Bluetooth connected")
         }
-        IconButton {
+        Image {
             width: 22
             height: 22
-            padding: 3
-            transparent: true
-            iconSource: root.wifiIcon()
-            iconColor: Theme.text
+            source: root.wifiIcon()
+            sourceSize: Qt.size(16, 16)
+            fillMode: Image.Pad
             visible: network.connectedSsid.length > 0
-            accessibleName: qsTr("Wi-Fi connected")
+            Accessible.role: Accessible.StaticText
+            Accessible.name: qsTr("Wi-Fi connected")
         }
         Row {
             height: parent.height
             spacing: 2
-            IconButton {
+            Image {
                 width: 22
                 height: 22
-                padding: 3
-                transparent: true
-                iconSource: root.batteryIcon()
-                iconColor: Theme.text
-                accessibleName: power.batteryPercent >= 0
-                                ? qsTr("Battery %1 percent").arg(power.batteryPercent)
-                                : qsTr("External power")
+                source: root.batteryIcon()
+                sourceSize: Qt.size(16, 16)
+                fillMode: Image.Pad
+                Accessible.role: Accessible.StaticText
+                Accessible.name: power.batteryPercent >= 0
+                                 ? qsTr("Battery %1 percent").arg(power.batteryPercent)
+                                 : qsTr("External power")
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter

@@ -246,7 +246,6 @@ double AppController::recommendationBias() const {
     return fromMetres(m_recommendationBiasMetres);
 }
 int AppController::cacheLimitMb() const { return m_cacheLimitMb; }
-bool AppController::diagnosticLogging() const { return m_diagnosticLogging; }
 bool AppController::celebrationsEnabled() const { return m_celebrationsEnabled; }
 int AppController::brightness() const {
     return m_powerProvider ? m_powerProvider->brightness() : 80;
@@ -260,11 +259,51 @@ bool AppController::openGolfMapReachable() const {
     }
     return true;
 }
+bool AppController::playsLikeAvailable() const { return m_playsLikeAvailable; }
+double AppController::playsLikeDistance() const { return m_playsLike.totalMetres(); }
+int AppController::playsLikeWindDelta() const {
+    return qRound(fromMetres(m_playsLike.windMetres));
+}
+int AppController::playsLikeTemperatureDelta() const {
+    return qRound(fromMetres(m_playsLike.temperatureMetres));
+}
+int AppController::playsLikeConditionDelta() const {
+    return qRound(fromMetres(m_playsLike.conditionMetres));
+}
+int AppController::windRelativeDegrees() const { return m_windRelativeDegrees; }
+
+domain::WeatherConditions AppController::activeWeather() const {
+    domain::WeatherConditions weather;
+    if (!m_activeRound)
+        return weather;
+    weather.temperatureC = m_activeRound->weatherTemperatureC;
+    weather.windSpeedMps = m_activeRound->weatherWindMps;
+    weather.windFromDegrees = m_activeRound->weatherWindDirectionDegrees;
+    weather.condition = m_activeRound->weatherCondition.toStdString();
+    return weather;
+}
+
+bool AppController::weatherAvailable() const {
+    return m_activeRound &&
+           (m_activeRound->weatherTemperatureC || m_activeRound->weatherWindMps ||
+            m_activeRound->weatherWindDirectionDegrees ||
+            !m_activeRound->weatherCondition.isEmpty());
+}
+double AppController::weatherWindMps() const {
+    return m_activeRound ? m_activeRound->weatherWindMps.value_or(0.0) : 0.0;
+}
+double AppController::weatherTemperatureC() const {
+    return m_activeRound ? m_activeRound->weatherTemperatureC.value_or(0.0) : 0.0;
+}
+QString AppController::weatherCondition() const {
+    return m_activeRound ? m_activeRound->weatherCondition : QString();
+}
+
 QString AppController::message() const { return m_message; }
 QString AppController::celebrationKind() const { return m_celebrationKind; }
 int AppController::celebrationSequence() const { return m_celebrationSequence; }
 
-void AppController::setScreen(const QString &screen) {
+bool AppController::isAllowedScreen(const QString &screen) {
     static const QSet<QString> allowed{
         QStringLiteral("WelcomeScreen"),
         QStringLiteral("CourseLibraryScreen"),
@@ -286,9 +325,19 @@ void AppController::setScreen(const QString &screen) {
         QStringLiteral("SettingsMapScreen"),
         QStringLiteral("SettingsConnectivityScreen"),
         QStringLiteral("SettingsIntegrationsScreen"),
-        QStringLiteral("SettingsPrivacyScreen"),
         QStringLiteral("WifiScreen"),
     };
+    return allowed.contains(screen);
+}
+
+void AppController::setScreen(const QString &screen) {
+    resetNavigation({}, screen);
+}
+
+bool AppController::canGoBack() const { return !m_backStack.isEmpty(); }
+int AppController::navigationDirection() const { return m_navigationDirection; }
+
+void AppController::navigateTo(const QString &screen) {
     QString target = screen;
     if (target == QStringLiteral("RoundDetailScreen") && m_roundDetail.isEmpty()) {
         if (m_history.isEmpty()) {
@@ -298,12 +347,48 @@ void AppController::setScreen(const QString &screen) {
                 m_history.constFirst().toMap().value(QStringLiteral("id")).toString());
         }
     }
-    if (!allowed.contains(target) || m_screen == target)
+    if (!isAllowedScreen(target) || m_screen == target)
         return;
+    if (!m_backStack.isEmpty() && m_backStack.constLast() == target) {
+        goBack();
+        return;
+    }
+    m_backStack.append(m_screen);
+    m_navigationDirection = 1;
     m_screen = target;
     emit screenChanged();
     if (target == QStringLiteral("StatsScreen"))
         refreshStatistics();
+}
+
+void AppController::goBack() {
+    if (m_backStack.isEmpty()) {
+        const QString root = m_activeRound ? QStringLiteral("LiveHoleScreen")
+                                           : QStringLiteral("WelcomeScreen");
+        if (m_screen != root)
+            resetNavigation({}, root);
+        return;
+    }
+    m_navigationDirection = -1;
+    m_screen = m_backStack.takeLast();
+    emit screenChanged();
+}
+
+void AppController::resetNavigation(QStringList stack, const QString &current) {
+    if (!isAllowedScreen(current))
+        return;
+    if (m_screen == current && m_backStack == stack)
+        return;
+    m_backStack = std::move(stack);
+    m_navigationDirection = 0;
+    if (m_screen != current) {
+        m_screen = current;
+        emit screenChanged();
+        if (current == QStringLiteral("StatsScreen"))
+            refreshStatistics();
+    } else {
+        emit screenChanged();
+    }
 }
 
 void AppController::reloadCourses() {
@@ -366,9 +451,6 @@ void AppController::loadSettings() {
         m_settings.value(QStringLiteral("cacheLimitMb"), QStringLiteral("1024"))
             .toInt(),
         128, 8192);
-    m_diagnosticLogging =
-        m_settings.value(QStringLiteral("diagnosticLogging"),
-                         QStringLiteral("false")) == QStringLiteral("true");
     m_celebrationsEnabled =
         m_settings.value(QStringLiteral("celebrationsEnabled"),
                          QStringLiteral("true")) == QStringLiteral("true");
@@ -445,7 +527,7 @@ void AppController::openCoursePicker(const QString &mode) {
         m_coursePickerMode = resolved;
         emit coursePickerModeChanged();
     }
-    setScreen(QStringLiteral("CourseLibraryScreen"));
+    navigateTo(QStringLiteral("CourseLibraryScreen"));
 }
 
 void AppController::activateCourse(const QString &slug) {
@@ -491,7 +573,7 @@ void AppController::planCourse(const QString &slug) {
         m_mapSource = liveMapSource;
         emit roundChanged();
     }
-    setScreen(QStringLiteral("CoursePlannerScreen"));
+    navigateTo(QStringLiteral("CoursePlannerScreen"));
 }
 
 void AppController::prepareRound(const QString &slug) {
@@ -505,7 +587,7 @@ void AppController::prepareRound(const QString &slug) {
     m_selectedCourseName = iterator->toMap().value(QStringLiteral("name")).toString();
     emit selectionChanged();
     emit courseAnalysisChanged();
-    setScreen(QStringLiteral("RoundSetupScreen"));
+    navigateTo(QStringLiteral("RoundSetupScreen"));
 }
 
 void AppController::startRound(const QString &slug, const int holes,
@@ -636,7 +718,8 @@ void AppController::finishRound() {
     selectHistoryRound(finishedRoundId);
     emit roundChanged();
     showMessage(tr("Round saved."));
-    setScreen(QStringLiteral("RoundDetailScreen"));
+    resetNavigation({QStringLiteral("WelcomeScreen"), QStringLiteral("HistoryScreen")},
+                    QStringLiteral("RoundDetailScreen"));
 }
 
 void AppController::previousHole() {
@@ -647,10 +730,8 @@ void AppController::previousHole() {
 void AppController::nextHole() {
     if (!m_activeRound)
         return;
-    if (currentHole() >= holeCount()) {
-        finishRound();
+    if (currentHole() >= holeCount())
         return;
-    }
     setHole(currentHole() + 1);
 }
 
@@ -950,15 +1031,6 @@ void AppController::setCacheLimitMb(const int megabytes) {
         return;
     m_cacheLimitMb = bounded;
     saveSetting(QStringLiteral("cacheLimitMb"), QString::number(bounded));
-    emit settingsChanged();
-}
-
-void AppController::setDiagnosticLogging(const bool enabled) {
-    if (m_diagnosticLogging == enabled)
-        return;
-    m_diagnosticLogging = enabled;
-    saveSetting(QStringLiteral("diagnosticLogging"),
-                enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit settingsChanged();
 }
 
@@ -1287,12 +1359,35 @@ void AppController::updateLiveData() {
         emit scoreEntryRequested(currentHole());
     }
 
+    m_playsLike = {};
+    m_playsLikeAvailable = false;
+    m_windRelativeDegrees = 0;
+    if (usable && m_centreDistance > 0.0) {
+        const domain::WeatherConditions weather = activeWeather();
+        const bool hasWeather = weather.temperatureC.has_value() ||
+                                (weather.windSpeedMps && weather.windFromDegrees) ||
+                                !weather.condition.empty();
+        if (hasWeather) {
+            const double bearing =
+                domain::initialBearingDegrees(m_lastFix.point, navigation.centre);
+            m_playsLike = domain::computePlaysLike(m_centreDistance, bearing, weather);
+            m_playsLikeAvailable = true;
+            if (weather.windFromDegrees) {
+                const int relative =
+                    qRound(static_cast<double>(*weather.windFromDegrees) - bearing);
+                m_windRelativeDegrees = ((relative % 360) + 360) % 360;
+            }
+        }
+    }
+
     m_clubAdvice.clear();
     m_clubDelta.clear();
     if (usable) {
+        const double effectiveDistance =
+            m_playsLikeAvailable ? m_playsLike.totalMetres() : m_centreDistance;
         const auto advice =
             domain::recommendClub(m_clubs.list(m_clubs.defaultProfileId()),
-                                  m_centreDistance, m_recommendationBiasMetres);
+                                  effectiveDistance, m_recommendationBiasMetres);
         if (advice) {
             m_clubAdvice = QString::fromStdString(advice->club.name);
             const double delta = fromMetres(advice->deltaMetres);

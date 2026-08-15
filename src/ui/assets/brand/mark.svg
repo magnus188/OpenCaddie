@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="7 8 50 48" width="50" height="48" role="img" aria-label="OpenCaddie">
+  <title>OpenCaddie</title>
+  <defs>
+    <linearGradient id="oc-arc" x1="13" y1="52" x2="49" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#167B43"/>
+      <stop offset="1" stop-color="#2FCB63"/>
+    </linearGradient>
+  </defs>
+  <path d="M47.383 20.528 A20 20 0 1 0 47.383 43.472"
+        fill="none" stroke="url(#oc-arc)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="51" cy="32" r="6" fill="#2FCB63"/>
+</svg>

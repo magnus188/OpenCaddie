@@ -430,6 +430,12 @@ int main(int argc, char **argv) {
             std::cerr << "Committed scores did not survive reopen\n";
             return EXIT_FAILURE;
         }
+        if (resumed->weatherTemperatureC != 17.0 || resumed->weatherWindMps != 4.2 ||
+            resumed->weatherWindDirectionDegrees.has_value() ||
+            resumed->weatherCondition != QStringLiteral("Partly cloudy")) {
+            std::cerr << "Round weather did not survive reopen\n";
+            return EXIT_FAILURE;
+        }
         if (!reopened.finish(resumed->id))
             return EXIT_FAILURE;
 

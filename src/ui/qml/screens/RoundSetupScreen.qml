@@ -18,7 +18,6 @@ PageScaffold {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: app.selectedCourseName
-        onBack: app.screen = "CourseLibraryScreen"
     }
 
     Column {
@@ -341,31 +340,14 @@ PageScaffold {
                 }
             }
 
-            Rectangle {
+            AppSwitch {
                 id: importSwitch
                 anchors.right: parent.right
                 anchors.rightMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
-                width: 48
-                height: 28
-                radius: 14
-                color: root.importAnalysis ? Theme.fairway : Theme.controlPressed
-
-                Rectangle {
-                    x: root.importAnalysis ? parent.width - width - 4 : 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 20
-                    height: 20
-                    radius: 10
-                    color: root.importAnalysis ? "#101211" : Theme.textMuted
-                    Behavior on x {
-                        NumberAnimation { duration: Theme.motionFast }
-                    }
-                }
-            }
-
-            TapHandler {
-                onTapped: root.importAnalysis = !root.importAnalysis
+                accessibleName: qsTr("Use saved course analysis")
+                checked: root.importAnalysis
+                onToggled: root.importAnalysis = checked
             }
         }
     }

@@ -19,6 +19,7 @@
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
@@ -171,6 +172,8 @@ int main(int argc, char *argv[]) {
         QFontDatabase::addApplicationFont(fontPath);
     }
     application.setFont(QFont(QStringLiteral("Inter")));
+    application.setWindowIcon(
+        QIcon(QStringLiteral(":/qt/qml/OpenCaddie/assets/brand/mark.svg")));
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("app"), &controller);
@@ -181,6 +184,8 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("bluetooth"),
                                              bluetoothProvider.get());
     engine.rootContext()->setContextProperty(QStringLiteral("simulator"), simulator);
+    engine.rootContext()->setContextProperty(QStringLiteral("screenshotMode"),
+                                             parser.isSet(screenshot));
     opencaddie::ui::TranslationManager translation(&engine);
     QObject::connect(&controller,
                      &opencaddie::ui::AppController::languageChangeRequested,

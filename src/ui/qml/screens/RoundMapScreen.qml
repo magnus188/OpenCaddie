@@ -10,35 +10,52 @@ PageScaffold {
     property bool showingImportedAnalysis: false
     property real pinchStartZoom: 1
     property real pinchStartRotation: 0
+    property real panStartX: 0
+    property real panStartY: 0
+    readonly property real fittedZoom: 1.0
+    readonly property real panActivationZoom: 1.01
+
+    function setMapZoom(value) {
+        courseMap.zoom = value <= panActivationZoom ? fittedZoom : value;
+        if (courseMap.zoom <= panActivationZoom)
+            recenterMap();
+    }
+
+    function recenterMap() {
+        if (courseMap.panX !== 0)
+            courseMap.panX = 0;
+        if (courseMap.panY !== 0)
+            courseMap.panY = 0;
+    }
 
     function beginMeasurement() {
-        courseMap.measurementPoints = []
-        measurementDone = false
-        showingImportedAnalysis = false
-        measuring = true
+        courseMap.measurementPoints = [];
+        measurementDone = false;
+        showingImportedAnalysis = false;
+        measuring = true;
     }
 
     function loadImportedAnalysis() {
-        var points = app.roundLayups || []
-        courseMap.measurementPoints = points
-        showingImportedAnalysis = points.length > 1
-        measurementDone = showingImportedAnalysis
-        measuring = false
+        var points = app.roundLayups || [];
+        courseMap.measurementPoints = points;
+        showingImportedAnalysis = points.length > 1;
+        measurementDone = showingImportedAnalysis;
+        measuring = false;
     }
 
     Component.onCompleted: loadImportedAnalysis()
 
     Connections {
         target: app
-        function onRoundChanged() { root.loadImportedAnalysis() }
+        function onRoundChanged() {
+            root.loadImportedAnalysis();
+        }
     }
 
     RadialMapGlow {
         anchors.fill: parent
-        innerColor: app.darkMode ? "rgba(47,203,99,0.11)"
-                                 : "rgba(22,123,67,0.09)"
-        middleColor: app.darkMode ? "rgba(18,42,27,0.06)"
-                                  : "rgba(47,203,99,0.03)"
+        innerColor: app.darkMode ? "rgba(47,203,99,0.11)" : "rgba(22,123,67,0.09)"
+        middleColor: app.darkMode ? "rgba(18,42,27,0.06)" : "rgba(47,203,99,0.03)"
     }
 
     CourseMap {
@@ -53,25 +70,51 @@ PageScaffold {
         metric: app.metric
         measurementFromPlayer: !root.showingImportedAnalysis && app.playerVisible
         measurementToTarget: false
-        panX: 0
-        panY: 0
         rotationDegrees: 0
         clip: true
 
+        onViewTransformChanged: {
+            if (zoom <= root.panActivationZoom)
+                root.recenterMap();
+        }
+
         Behavior on rotationDegrees {
-            NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: Theme.motionSheet
+                easing.type: Easing.OutCubic
+            }
         }
 
         TapHandler {
             enabled: root.measuring
             gesturePolicy: TapHandler.ReleaseWithinBounds
-            onTapped: function(eventPoint) {
-                var point = courseMap.mapPointAt(eventPoint.position.x,
-                                                 eventPoint.position.y)
-                if (!point.inside) return
-                var points = courseMap.measurementPoints.slice(0)
-                points.push({x: point.x, y: point.y})
-                courseMap.measurementPoints = points
+            onTapped: function (eventPoint) {
+                var point = courseMap.mapPointAt(eventPoint.position.x, eventPoint.position.y);
+                if (!point.inside)
+                    return;
+                var points = courseMap.measurementPoints.slice(0);
+                points.push({
+                    x: point.x,
+                    y: point.y
+                });
+                courseMap.measurementPoints = points;
+            }
+        }
+
+        DragHandler {
+            target: null
+            enabled: courseMap.zoom > root.panActivationZoom
+            minimumPointCount: 1
+            maximumPointCount: 1
+            onActiveChanged: {
+                if (active) {
+                    root.panStartX = courseMap.panX;
+                    root.panStartY = courseMap.panY;
+                }
+            }
+            onTranslationChanged: {
+                courseMap.panX = root.panStartX + translation.x;
+                courseMap.panY = root.panStartY + translation.y;
             }
         }
 
@@ -81,20 +124,19 @@ PageScaffold {
             maximumPointCount: 2
             onActiveChanged: {
                 if (active) {
-                    root.pinchStartZoom = courseMap.zoom
-                    root.pinchStartRotation = courseMap.rotationDegrees
+                    root.pinchStartZoom = courseMap.zoom;
+                    root.pinchStartRotation = courseMap.rotationDegrees;
                 }
             }
-            onActiveScaleChanged: courseMap.zoom = root.pinchStartZoom * activeScale
-            onActiveRotationChanged: courseMap.rotationDegrees =
-                                         root.pinchStartRotation + activeRotation
+            onActiveScaleChanged: root.setMapZoom(root.pinchStartZoom * activeScale)
+            onActiveRotationChanged: courseMap.rotationDegrees = root.pinchStartRotation + activeRotation
         }
 
         WheelHandler {
             target: null
-            onWheel: function(event) {
-                courseMap.zoom *= event.angleDelta.y > 0 ? 1.12 : 0.89
-                event.accepted = true
+            onWheel: function (event) {
+                root.setMapZoom(courseMap.zoom * (event.angleDelta.y > 0 ? 1.12 : 0.89));
+                event.accepted = true;
             }
         }
     }
@@ -125,7 +167,7 @@ PageScaffold {
         iconSource: "../../assets/icons/lucide/chevron-left.svg"
         iconColor: Theme.text
         accessibleName: qsTr("Back")
-        onClicked: app.screen = "LiveHoleScreen"
+        onClicked: app.goBack()
         z: 10
     }
 
@@ -154,7 +196,34 @@ PageScaffold {
         rotation: -courseMap.rotationDegrees
         onClicked: courseMap.rotationDegrees = 0
         z: 10
-        Behavior on rotation { NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic } }
+        Behavior on rotation {
+            NumberAnimation {
+                duration: Theme.motionSheet
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    Column {
+        anchors.right: parent.right
+        anchors.rightMargin: 14
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 8
+        z: 10
+
+        IconButton {
+            iconSource: "../../assets/icons/lucide/plus.svg"
+            iconColor: Theme.text
+            accessibleName: qsTr("Zoom in")
+            onClicked: root.setMapZoom(courseMap.zoom * 1.2)
+        }
+        IconButton {
+            iconSource: "../../assets/icons/lucide/minus.svg"
+            iconColor: Theme.text
+            accessibleName: qsTr("Zoom out")
+            enabled: courseMap.zoom > root.panActivationZoom
+            onClicked: root.setMapZoom(courseMap.zoom / 1.2)
+        }
     }
 
     Rectangle {
@@ -180,29 +249,20 @@ PageScaffold {
         }
     }
 
-    Rectangle {
+    AppButton {
         id: measurePill
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: 18
         anchors.bottomMargin: 16
         width: 132
-        height: 46
-        radius: 23
-        color: Theme.overlay
-        border.width: 1
-        border.color: Theme.border
+        height: Theme.touch
+        text: qsTr("Measure")
+        variant: "surface"
+        compact: true
         visible: !root.measuring && !root.measurementDone
         z: 10
-        Row {
-            anchors.centerIn: parent
-            spacing: 6
-            IconButton { width: 30; height: 30; padding: 4; transparent: true; iconSource: "../../assets/icons/lucide/ruler.svg"; iconColor: Theme.text; accessibleName: qsTr("Measure"); onClicked: root.beginMeasurement() }
-            Text { anchors.verticalCenter: parent.verticalCenter; text: qsTr("Measure"); color: Theme.text; font.family: "Inter"; font.weight: Font.DemiBold; font.pixelSize: Theme.px(14) }
-        }
-        TapHandler {
-            onTapped: root.beginMeasurement()
-        }
+        onClicked: root.beginMeasurement()
     }
 
     Row {
@@ -219,9 +279,9 @@ PageScaffold {
             compact: true
             enabled: courseMap.measurementPoints.length > 0
             onClicked: {
-                var points = courseMap.measurementPoints.slice(0)
-                points.pop()
-                courseMap.measurementPoints = points
+                var points = courseMap.measurementPoints.slice(0);
+                points.pop();
+                courseMap.measurementPoints = points;
             }
         }
         AppButton {
@@ -229,8 +289,8 @@ PageScaffold {
             variant: "primary"
             compact: true
             onClicked: {
-                root.measuring = false
-                root.measurementDone = courseMap.measurementPoints.length > 0
+                root.measuring = false;
+                root.measurementDone = courseMap.measurementPoints.length > 0;
             }
         }
     }
@@ -246,9 +306,9 @@ PageScaffold {
         visible: root.measurementDone && !root.measuring
         z: 10
         onClicked: {
-            courseMap.measurementPoints = []
-            root.measurementDone = false
-            root.showingImportedAnalysis = false
+            courseMap.measurementPoints = [];
+            root.measurementDone = false;
+            root.showingImportedAnalysis = false;
         }
     }
 

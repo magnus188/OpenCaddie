@@ -5,13 +5,17 @@ import OpenCaddie
 Dialog {
     id: dialog
     property string bodyText
+    property bool destructive: false
+    property string confirmText: qsTr("Confirm")
     signal confirmed()
 
     anchors.centerIn: parent
     width: Math.min(parent ? parent.width - 64 : 520, 520)
     modal: true
-    closePolicy: Popup.CloseOnEscape
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     padding: 0
+    header: null
+    footer: null
 
     background: Rectangle {
         color: Theme.surface
@@ -45,12 +49,12 @@ Dialog {
             spacing: 10
             AppButton {
                 text: qsTr("Cancel")
-                variant: "accent"
+                variant: "surface"
                 onClicked: dialog.close()
             }
             AppButton {
-                text: qsTr("Confirm")
-                variant: "danger"
+                text: dialog.confirmText
+                variant: dialog.destructive ? "danger" : "primary"
                 onClicked: {
                     dialog.confirmed()
                     dialog.close()

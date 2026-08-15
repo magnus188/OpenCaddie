@@ -25,7 +25,6 @@ PageScaffold {
                         .arg(app.coursePlan.name || app.selectedCourseName)
                         .arg(app.selectedCourseAnalyzedHoleCount)
                   : app.coursePlan.name || app.selectedCourseName
-        onBack: app.screen = "CourseLibraryScreen"
     }
 
     ListView {
@@ -101,7 +100,7 @@ PageScaffold {
                 accessibleName: qsTr("Open hole map")
                 onClicked: {
                     app.plannerHole = Number(row.modelData.number)
-                    app.screen = "CoursePlannerMapScreen"
+                    app.navigateTo("CoursePlannerMapScreen")
                 }
             }
 
@@ -117,7 +116,7 @@ PageScaffold {
                 id: rowTap
                 onTapped: {
                     app.plannerHole = Number(row.modelData.number)
-                    app.screen = "CoursePlannerMapScreen"
+                    app.navigateTo("CoursePlannerMapScreen")
                 }
             }
         }

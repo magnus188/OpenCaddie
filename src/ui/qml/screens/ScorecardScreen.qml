@@ -1,9 +1,11 @@
 import QtQuick
+import QtQuick.Controls
 import OpenCaddie
 
 Item {
     id: root
     anchors.fill: parent
+    property real columnWeightTotal: 6.3
     property int grossTotal: {
         var total = 0
         for (var i = 0; i < app.scorecard.length; ++i)
@@ -33,7 +35,6 @@ Item {
         anchors.rightMargin: Theme.gutter
         title: qsTr("Scorecard")
         subtitle: app.courseName
-        onBack: app.screen = "LiveHoleScreen"
     }
 
     Row {
@@ -92,9 +93,11 @@ Item {
             clip: true
             spacing: 2
             model: app.scorecard
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollIndicator.vertical: ScrollIndicator { }
             header: Item {
                 width: ListView.view.width
-                height: 34
+                height: Theme.touch
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -106,17 +109,18 @@ Item {
                     anchors.fill: parent
                     Repeater {
                         model: [
-                            { text: qsTr("Hole"), width: 70 },
-                            { text: qsTr("Par"), width: 70 },
-                            { text: qsTr("Index"), width: 70 },
-                            { text: qsTr("Strokes"), width: 120 },
-                            { text: qsTr("Putts"), width: 100 },
-                            { text: qsTr("Pen."), width: 90 },
-                            { text: qsTr("Points"), width: 100 }
+                            { text: qsTr("Hole"), weight: 0.7 },
+                            { text: qsTr("Par"), weight: 0.7 },
+                            { text: qsTr("Index"), weight: 0.8 },
+                            { text: qsTr("Strokes"), weight: 1.2 },
+                            { text: qsTr("Putts"), weight: 1.0 },
+                            { text: qsTr("Pen."), weight: 0.9 },
+                            { text: qsTr("Points"), weight: 1.0 }
                         ]
                         Text {
                             required property var modelData
-                            width: modelData.width
+                            width: parent.width * modelData.weight /
+                                   root.columnWeightTotal
                             height: parent.height
                             text: modelData.text
                             color: Theme.textMuted
@@ -134,7 +138,7 @@ Item {
                 required property var modelData
                 required property int index
                 width: ListView.view.width
-                height: 38
+                height: Theme.touch
                 color: modelData.hole === app.currentHole
                        ? Qt.rgba(0.18, 0.80, 0.39, 0.12)
                        : scoreTap.pressed ? Theme.controlPressed : "transparent"
@@ -149,17 +153,18 @@ Item {
                     anchors.fill: parent
                     Repeater {
                         model: [
-                            { text: modelData.hole, width: 70 },
-                            { text: modelData.par, width: 70 },
-                            { text: modelData.index, width: 70 },
-                            { text: modelData.strokes || "—", width: 120 },
-                            { text: modelData.putts || "—", width: 100 },
-                            { text: modelData.penalties || "—", width: 90 },
-                            { text: modelData.stableford || "—", width: 100 }
+                            { text: modelData.hole, weight: 0.7 },
+                            { text: modelData.par, weight: 0.7 },
+                            { text: modelData.index, weight: 0.8 },
+                            { text: modelData.strokes || "—", weight: 1.2 },
+                            { text: modelData.putts || "—", weight: 1.0 },
+                            { text: modelData.penalties || "—", weight: 0.9 },
+                            { text: modelData.stableford || "—", weight: 1.0 }
                         ]
                         Text {
                             required property var modelData
-                            width: modelData.width
+                            width: parent.width * modelData.weight /
+                                   root.columnWeightTotal
                             height: parent.height
                             text: modelData.text
                             color: Theme.text
@@ -175,14 +180,14 @@ Item {
                     id: scoreTap
                     onTapped: {
                         app.setHole(modelData.hole)
-                        app.screen = "LiveHoleScreen"
+                        app.goBack()
                     }
                 }
             }
         }
     }
 
-    Row {
+    Item {
         id: footer
         anchors.left: parent.left
         anchors.right: parent.right
@@ -190,21 +195,30 @@ Item {
         anchors.margins: 16
         height: 48
         AppButton {
+            id: backToHole
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Back to hole")
-            onClicked: app.screen = "LiveHoleScreen"
+            onClicked: app.goBack()
         }
-        Item { width: parent.width - abandon.width - finish.width - 236; height: 1 }
-        AppButton {
-            id: abandon
-            text: qsTr("Abandon")
-            variant: "danger"
-            onClicked: abandonDialog.open()
-        }
-        AppButton {
-            id: finish
-            text: qsTr("Finish round")
-            variant: "primary"
-            onClicked: finishDialog.open()
+
+        Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+
+            AppButton {
+                id: abandon
+                text: qsTr("Abandon")
+                variant: "danger"
+                onClicked: abandonDialog.open()
+            }
+            AppButton {
+                id: finish
+                text: qsTr("Finish round")
+                variant: "primary"
+                onClicked: finishDialog.open()
+            }
         }
     }
 
@@ -212,12 +226,15 @@ Item {
         id: abandonDialog
         title: qsTr("Abandon round?")
         bodyText: qsTr("The partial scorecard stays in history as abandoned.")
+        destructive: true
+        confirmText: qsTr("Abandon")
         onConfirmed: app.abandonRound()
     }
     ConfirmDialog {
         id: finishDialog
         title: qsTr("Finish round?")
         bodyText: qsTr("The scorecard will be saved to round history.")
+        confirmText: qsTr("Finish")
         onConfirmed: app.finishRound()
     }
 }

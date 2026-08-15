@@ -27,6 +27,17 @@ double haversineMetres(const GeoPoint& from, const GeoPoint& to) {
            std::atan2(std::sqrt(a), std::sqrt(std::max(0.0, 1.0 - a)));
 }
 
+double initialBearingDegrees(const GeoPoint& from, const GeoPoint& to) {
+    const double lat1 = from.latitude * DegreesToRadians;
+    const double lat2 = to.latitude * DegreesToRadians;
+    const double deltaLon = (to.longitude - from.longitude) * DegreesToRadians;
+    const double y = std::sin(deltaLon) * std::cos(lat2);
+    const double x = std::cos(lat1) * std::sin(lat2) -
+                     std::sin(lat1) * std::cos(lat2) * std::cos(deltaLon);
+    const double bearing = std::atan2(y, x) / DegreesToRadians;
+    return std::fmod(bearing + 360.0, 360.0);
+}
+
 std::pair<double, double> projectToLocal(const GeoPoint& point,
                                         const LocalProjection& projection) {
     const double cosLatitude =

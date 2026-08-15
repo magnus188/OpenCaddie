@@ -3,7 +3,6 @@
 #include "domain/Types.h"
 
 #include <QObject>
-#include <QVariantMap>
 
 Q_DECLARE_METATYPE(opencaddie::domain::PositionFix)
 
@@ -22,7 +21,6 @@ public:
 
 signals:
     void positionChanged(const opencaddie::domain::PositionFix& fix);
-    void diagnosticsChanged(const QVariantMap& diagnostics);
 };
 
 } // namespace opencaddie::positioning

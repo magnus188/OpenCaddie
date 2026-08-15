@@ -20,7 +20,6 @@ PageScaffold {
         anchors.leftMargin: Theme.gutter
         anchors.rightMargin: Theme.gutter
         title: qsTr("Hole %1 score").arg(app.currentHole)
-        onBack: app.screen = "LiveHoleScreen"
     }
 
     Column {
@@ -122,7 +121,7 @@ PageScaffold {
             if (app.saveHoleScore(root.draftStrokes, root.draftPutts,
                                   root.draftPenalties, root.draftFairway,
                                   root.draftGir, root.draftNotes)) {
-                app.screen = "LiveHoleScreen"
+                app.goBack()
             }
         }
     }

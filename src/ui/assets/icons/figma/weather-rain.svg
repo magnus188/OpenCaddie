@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="68" height="68.5" viewBox="0 0 68 68.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon">
+<g id="Arrow down">
+<rect id="Rectangle 1" x="43.3494" y="49.5" width="6" height="9" fill="#35D7D7"/>
+<path id="Polygon 2" d="M46.3494 65.5L40.2872 58H52.4115L46.3494 65.5Z" fill="#35D7D7"/>
+</g>
+<g id="Arrow up">
+<rect id="Rectangle 1_2" x="31.3494" y="68.5" width="6" height="9" transform="rotate(-180 31.3494 68.5)" fill="#35D7D7"/>
+<path id="Polygon 2_2" d="M28.3494 52.5L34.4115 60H22.2872L28.3494 52.5Z" fill="#35D7D7"/>
+</g>
+<path id="cloud" fill-rule="evenodd" clip-rule="evenodd" d="M49.0174 10.6845C45.8979 4.36266 39.4039 0 31.875 0C21.7834 0 13.5363 7.82419 12.8202 17.7331C5.40179 19.8474 0 26.3288 0 34C0 43.0525 7.5225 50.4794 17 51H48.875C59.4278 51 68 41.9624 68 30.8125C68 20.0685 59.6042 11.3114 49.0174 10.6845Z" fill="#35D7D7"/>
+</g>
+</svg>
