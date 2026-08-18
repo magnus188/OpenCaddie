@@ -69,6 +69,18 @@ Item {
             color: slider.pressed ? Theme.controlPressed : Theme.text
             border.width: 2
             border.color: Theme.fairway
+            scale: slider.pressed ? 1.1 : 1
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: slider.pressed ? Theme.motionPress : Theme.motion
+                    easing.type: slider.pressed ? Easing.OutCubic : Easing.OutBack
+                    easing.overshoot: 0.55
+                }
+            }
+            Behavior on color {
+                ColorAnimation { duration: Theme.motionFast }
+            }
         }
     }
 

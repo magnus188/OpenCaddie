@@ -5,6 +5,24 @@ Item {
     property string innerColor: "rgba(47,203,99,0.12)"
     property string middleColor: "rgba(47,203,99,0.05)"
     property string outerColor: "rgba(47,203,99,0)"
+    opacity: 1
+
+    SequentialAnimation on opacity {
+        running: root.visible
+        loops: 1
+        NumberAnimation {
+            from: 1
+            to: 0.92
+            duration: Theme.motionAmbient
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            from: 0.92
+            to: 1
+            duration: Theme.motionAmbient
+            easing.type: Easing.InOutSine
+        }
+    }
 
     Canvas {
         id: glowCanvas

@@ -68,6 +68,18 @@ PageScaffold {
         playerY: app.playerY
         playerVisible: app.playerVisible
         metric: app.metric
+        shotTrail: app.currentHoleShotTrail
+        showShotTrailLabels: true
+        shotTrailColors: ({
+            drive: Theme.water,
+            approach: Theme.fairway,
+            chip: Theme.amber,
+            putt: Theme.text,
+            unknown: Theme.textMuted,
+            outline: Theme.background,
+            labelBackground: Theme.overlay,
+            labelText: Theme.text
+        })
         measurementFromPlayer: !root.showingImportedAnalysis && app.playerVisible
         measurementToTarget: false
         rotationDegrees: 0

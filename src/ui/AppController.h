@@ -94,6 +94,16 @@ class AppController final : public QObject {
     Q_PROPERTY(double playerY READ playerY NOTIFY liveChanged)
     Q_PROPERTY(bool playerVisible READ playerVisible NOTIFY liveChanged)
     Q_PROPERTY(QVariantList roundLayups READ roundLayups NOTIFY liveChanged)
+    Q_PROPERTY(bool shotGpsAvailable READ shotGpsAvailable
+                   NOTIFY shotTrackingChanged)
+    Q_PROPERTY(int recordedStrokeCount READ recordedStrokeCount
+                   NOTIFY shotTrackingChanged)
+    Q_PROPERTY(QVariantMap lastRecordedStroke READ lastRecordedStroke
+                   NOTIFY shotTrackingChanged)
+    Q_PROPERTY(QVariantList currentHoleShotTrail READ currentHoleShotTrail
+                   NOTIFY shotTrackingChanged)
+    Q_PROPERTY(bool canUndoRecordedStroke READ canUndoRecordedStroke
+                   NOTIFY shotTrackingChanged)
     Q_PROPERTY(bool metric READ metric WRITE setMetric NOTIFY settingsChanged)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY settingsChanged)
     Q_PROPERTY(bool darkMode READ darkMode WRITE setDarkMode NOTIFY settingsChanged)
@@ -193,6 +203,11 @@ class AppController final : public QObject {
     [[nodiscard]] double playerY() const;
     [[nodiscard]] bool playerVisible() const;
     [[nodiscard]] QVariantList roundLayups() const;
+    [[nodiscard]] bool shotGpsAvailable() const;
+    [[nodiscard]] int recordedStrokeCount() const;
+    [[nodiscard]] QVariantMap lastRecordedStroke() const;
+    [[nodiscard]] QVariantList currentHoleShotTrail() const;
+    [[nodiscard]] bool canUndoRecordedStroke() const;
     [[nodiscard]] bool metric() const;
     void setMetric(bool metric);
     [[nodiscard]] QString language() const;
@@ -250,9 +265,15 @@ class AppController final : public QObject {
     Q_INVOKABLE bool saveHoleScore(int strokes, int putts, int penalties,
                                    const QString &fairway, bool gir,
                                    const QString &notes);
-    Q_INVOKABLE void addClub(const QString &name, double carryDisplayUnits);
-    Q_INVOKABLE void updateClub(const QString &id, const QString &name,
-                                double carryDisplayUnits, bool enabled);
+    Q_INVOKABLE bool recordStroke();
+    Q_INVOKABLE bool recordStrokeWithClub(const QString &clubId);
+    Q_INVOKABLE bool undoLastRecordedStroke();
+    Q_INVOKABLE bool setLastRecordedStrokeType(const QString &type);
+    Q_INVOKABLE bool addClub(const QString &name, double carryDisplayUnits,
+                             const QString &type, bool enabled);
+    Q_INVOKABLE bool updateClub(const QString &id, const QString &name,
+                                double carryDisplayUnits, const QString &type,
+                                bool enabled);
     Q_INVOKABLE void removeClub(const QString &id);
     Q_INVOKABLE void reorderClubs(const QVariantList &ids);
     Q_INVOKABLE void refreshHistory(const QString &query = {});
@@ -283,6 +304,7 @@ class AppController final : public QObject {
     void roundChanged();
     void liveChanged();
     void scoreChanged();
+    void shotTrackingChanged();
     void settingsChanged();
     void courseServiceChanged();
     void messageChanged();
@@ -298,6 +320,7 @@ class AppController final : public QObject {
         double teeX = 0.0;
         double teeY = 0.0;
         QString teeLabel;
+        QMap<QString, domain::GeoPoint> tees;
         domain::GeoPoint centre;
         std::vector<domain::GeoPoint> polygon;
         domain::LocalProjection projection;
@@ -313,6 +336,8 @@ class AppController final : public QObject {
     void handlePosition(const domain::PositionFix &fix);
     void updateLiveData();
     void loadCurrentScore();
+    void reloadCurrentHoleShots();
+    bool recordStrokeForClub(const QString &clubId);
     bool saveCurrentScore();
     void celebrateCurrentHole();
     void rebuildScorecard();
@@ -333,6 +358,7 @@ class AppController final : public QObject {
     storage::SettingsRepository m_settings;
     storage::ClubRepository m_clubs;
     storage::RoundRepository m_rounds;
+    storage::ShotRepository m_shots;
     storage::CourseAnalysisRepository m_courseAnalyses;
     storage::StatisticsRepository m_statisticsRepository;
     storage::CourseRepository m_courseRepository;
@@ -382,6 +408,8 @@ class AppController final : public QObject {
     double m_playerY = 0.0;
     bool m_playerVisible = false;
     domain::HoleScore m_currentScore;
+    std::vector<storage::ShotRecord> m_currentHoleShots;
+    QVariantList m_currentHoleShotTrail;
     bool m_metric = true;
     QString m_language = QStringLiteral("en");
     bool m_darkMode = true;

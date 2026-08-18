@@ -35,6 +35,13 @@ points cannot change as additional holes are entered, and enforces score
 participant/round identity.
 Schema v6 persists per-hole course-analysis routes and snapshots selected routes
 into a round. This keeps an active round independent from later analysis edits.
+Optional stroke tracking reuses the canonical `shots` table. Append, latest-shot
+undo, and latest-shot type correction update the owner score and putt count in
+the same transaction. Those operations change only strokes/putts and retain
+penalties, fairway/GIR, tee, notes, and manual score corrections. A failed
+transaction changes neither side. The club picker stores the selected club ID
+and a name snapshot on the shot; choosing no club leaves both fields empty and
+does not alter the tracking transaction.
 Statistics are projections rebuilt from owner-participant scores and shots.
 Nine-hole and partially scored results are normalized by recorded holes when
 shown on an 18-hole trend, but only when every scored hole has valid par
@@ -53,6 +60,13 @@ WGS84 positions are transformed through the per-hole local origin and rotation.
 Club advice is hidden for invalid fixes, fixes older than ten seconds, or
 accuracy worse than 25 m. Automatic hole selection uses distance hysteresis.
 No slope, weather, or “plays like” value is invented.
+
+The same fresh-fix rule applies to stroke tracking. The first start point must
+come from the round's exactly selected tee; later starts may use only the prior
+recorded landing. A missing fix is stored as a locationless `unknown` stroke,
+and score/trail continuity is deliberately not synthesized across missed or
+manually entered strokes. Stroke categories are best-effort projections and the
+latest local category remains editable.
 
 ## Extension boundaries
 

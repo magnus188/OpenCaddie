@@ -29,6 +29,16 @@ CourseMapItem::CourseMapItem(QQuickItem* parent) : QQuickPaintedItem(parent) {
         {QStringLiteral("hole_line"), QStringLiteral("#F7F8F2")},
         {QStringLiteral("pin"), QStringLiteral("#D94D3E")},
     };
+    m_shotTrailColors = {
+        {QStringLiteral("drive"), QStringLiteral("#2BA7D7")},
+        {QStringLiteral("approach"), QStringLiteral("#2FCB63")},
+        {QStringLiteral("chip"), QStringLiteral("#F2A93B")},
+        {QStringLiteral("putt"), QStringLiteral("#F7F8F2")},
+        {QStringLiteral("unknown"), QStringLiteral("#A7B0AA")},
+        {QStringLiteral("outline"), QStringLiteral("#101211")},
+        {QStringLiteral("labelBackground"), QStringLiteral("#D9101211")},
+        {QStringLiteral("labelText"), QStringLiteral("#F7F8F2")},
+    };
 }
 
 void CourseMapItem::paint(QPainter* painter) {
@@ -40,6 +50,7 @@ void CourseMapItem::paint(QPainter* painter) {
         m_renderer.render(painter, m_viewBox);
         painter->restore();
     }
+    paintShotTrail(painter);
     paintMeasurements(painter);
     paintPlayer(painter);
 }
@@ -64,6 +75,13 @@ bool CourseMapItem::measurementToTarget() const {
     return m_measurementToTarget;
 }
 bool CourseMapItem::metric() const { return m_metric; }
+QVariantList CourseMapItem::shotTrail() const { return m_shotTrail; }
+bool CourseMapItem::showShotTrailLabels() const {
+    return m_showShotTrailLabels;
+}
+QVariantMap CourseMapItem::shotTrailColors() const {
+    return m_shotTrailColors;
+}
 
 void CourseMapItem::setModelSource(const QUrl& source) {
     if (source == m_modelSource) return;
@@ -171,6 +189,33 @@ void CourseMapItem::setMetric(const bool value) {
     if (m_metric == value) return;
     m_metric = value;
     emit measurementChanged();
+    update();
+}
+
+void CourseMapItem::setShotTrail(const QVariantList& trail) {
+    if (m_shotTrail == trail) return;
+    m_shotTrail = trail;
+    emit shotTrailChanged();
+    update();
+}
+
+void CourseMapItem::setShowShotTrailLabels(const bool value) {
+    if (m_showShotTrailLabels == value) return;
+    m_showShotTrailLabels = value;
+    emit shotTrailChanged();
+    update();
+}
+
+void CourseMapItem::setShotTrailColors(const QVariantMap& colors) {
+    QVariantMap updated = m_shotTrailColors;
+    for (auto iterator = colors.cbegin(); iterator != colors.cend(); ++iterator) {
+        if (QColor(iterator.value().toString()).isValid()) {
+            updated.insert(iterator.key(), iterator.value());
+        }
+    }
+    if (updated == m_shotTrailColors) return;
+    m_shotTrailColors = std::move(updated);
+    emit shotTrailChanged();
     update();
 }
 
@@ -406,6 +451,110 @@ QVector<QPointF> CourseMapItem::measurementPath() const {
     }
     if (m_measurementToTarget && m_targetVisible) points.push_back(m_target);
     return points;
+}
+
+void CourseMapItem::paintShotTrail(QPainter* painter) const {
+    if (m_shotTrail.isEmpty()) return;
+
+    const QTransform transform = mapToItemTransform();
+    const auto trailColor = [this](const QString& key,
+                                   const QString& fallback) {
+        const QColor color(m_shotTrailColors.value(key).toString());
+        return color.isValid() ? color : QColor(fallback);
+    };
+    const QColor outline = trailColor(QStringLiteral("outline"),
+                                      QStringLiteral("#101211"));
+    const QColor labelBackground = trailColor(
+        QStringLiteral("labelBackground"), QStringLiteral("#D9101211"));
+    const QColor labelText = trailColor(QStringLiteral("labelText"),
+                                        QStringLiteral("#F7F8F2"));
+
+    QFont markerFont(QStringLiteral("Inter"));
+    markerFont.setPixelSize(11);
+    markerFont.setWeight(QFont::Bold);
+    QFont labelFont(QStringLiteral("Inter"));
+    labelFont.setPixelSize(12);
+    labelFont.setWeight(QFont::DemiBold);
+
+    painter->save();
+    painter->setClipRect(boundingRect());
+    for (const auto& value : m_shotTrail) {
+        const QVariantMap shot = value.toMap();
+        bool endXValid = false;
+        bool endYValid = false;
+        const double endX = shot.value(QStringLiteral("endX"))
+                                .toDouble(&endXValid);
+        const double endY = shot.value(QStringLiteral("endY"))
+                                .toDouble(&endYValid);
+        if (!endXValid || !endYValid) continue;
+
+        const QString type = shot.value(QStringLiteral("type")).toString();
+        const QColor color = trailColor(type, QStringLiteral("#A7B0AA"));
+        const QPointF end = transform.map(QPointF{endX, endY});
+        bool startXValid = false;
+        bool startYValid = false;
+        const double startX = shot.value(QStringLiteral("startX"))
+                                  .toDouble(&startXValid);
+        const double startY = shot.value(QStringLiteral("startY"))
+                                  .toDouble(&startYValid);
+
+        if (startXValid && startYValid) {
+            const QPointF start = transform.map(QPointF{startX, startY});
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(outline, 5.5, Qt::SolidLine,
+                                 Qt::RoundCap, Qt::RoundJoin));
+            painter->drawLine(start, end);
+            painter->setPen(QPen(color, 3.0, Qt::SolidLine,
+                                 Qt::RoundCap, Qt::RoundJoin));
+            painter->drawLine(start, end);
+
+            bool distanceValid = false;
+            const QVariant distanceValue =
+                shot.contains(QStringLiteral("distance"))
+                    ? shot.value(QStringLiteral("distance"))
+                    : shot.value(QStringLiteral("distanceMetres"));
+            const double metres = distanceValue.toDouble(&distanceValid);
+            if (m_showShotTrailLabels && distanceValid && metres >= 0.0) {
+                const int displayDistance = static_cast<int>(std::round(
+                    m_metric ? metres : metres * 1.0936133));
+                const QString label = QStringLiteral("%1 %2")
+                                          .arg(displayDistance)
+                                          .arg(m_metric
+                                                   ? QStringLiteral("m")
+                                                   : QStringLiteral("yd"));
+                painter->setFont(labelFont);
+                const QFontMetrics metrics(labelFont);
+                const QSize textSize = metrics.size(Qt::TextSingleLine, label);
+                QPointF centre = (start + end) / 2.0;
+                const QPointF delta = end - start;
+                const double length = std::hypot(delta.x(), delta.y());
+                if (length > 0.5) {
+                    centre += QPointF{-delta.y() / length * 15.0,
+                                      delta.x() / length * 15.0};
+                }
+                const QRectF labelRect(
+                    centre.x() - textSize.width() / 2.0 - 6.0,
+                    centre.y() - textSize.height() / 2.0 - 3.0,
+                    textSize.width() + 12.0, textSize.height() + 6.0);
+                painter->setPen(Qt::NoPen);
+                painter->setBrush(labelBackground);
+                painter->drawRoundedRect(labelRect, 6.0, 6.0);
+                painter->setPen(labelText);
+                painter->drawText(labelRect, Qt::AlignCenter, label);
+            }
+        }
+
+        const int sequence = shot.value(QStringLiteral("sequence")).toInt();
+        const QString sequenceText = QString::number(std::max(0, sequence));
+        painter->setPen(QPen(outline, 2.0));
+        painter->setBrush(color);
+        painter->drawEllipse(end, 9.0, 9.0);
+        painter->setFont(markerFont);
+        painter->setPen(type == QStringLiteral("putt") ? outline : labelText);
+        painter->drawText(QRectF{end.x() - 9.0, end.y() - 9.0, 18.0, 18.0},
+                          Qt::AlignCenter, sequenceText);
+    }
+    painter->restore();
 }
 
 void CourseMapItem::paintMeasurements(QPainter* painter) const {

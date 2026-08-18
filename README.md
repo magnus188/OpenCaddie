@@ -8,6 +8,24 @@ management in a touch-first 800×480 interface. Completed rounds
 feed local overall/per-course statistics, scoring trends, accuracy summaries,
 weather provenance, and recorded-shot milestones.
 
+## Optional stroke tracking
+
+During a round, tap **Record stroke** after walking to the ball, then tap the
+club image used for the shot. Choosing **Record without club** keeps club
+selection optional. OpenCaddie uses only a fresh GPS fix (10 seconds old or less
+and within 25 m accuracy), records the club and landing locally, increments the
+editable score, and adds the shot to both hole maps. If no usable fix is
+available, the tap still records an **Unknown** stroke and increments the score
+without inventing a position or distance.
+
+Drive, approach, chip, and putt labels are best-effort inferences from stroke
+order, the selected tee, and green geometry. The latest recorded stroke can be
+retyped with large type buttons or undone immediately, while the normal score
+screen remains the source of truth for missed taps, penalties, and other manual
+corrections. Tracking is entirely optional: it never blocks hole navigation or
+round completion. Round and statistics screens show “tracked · scored” coverage
+so partial tracking is not presented as a complete shot history.
+
 > Status: V1 developer preview. The domain, storage, course-package, hardware
 > abstraction, simulator, and device UI are implemented. Hardware endurance and
 > outdoor-display qualification remain release gates.
@@ -99,7 +117,7 @@ live in `user.sqlite`. Wi-Fi secrets are never persisted by OpenCaddie.
 
 ## Repository layout
 
-- `src/domain`: scoring, Stableford, units, geometry, GPS validity, hole selection
+- `src/domain`: scoring, Stableford, units, geometry, GPS validity, hole and stroke classification
 - `src/storage`: migrations and repositories for profiles, clubs, courses, rounds
 - `src/courses`: OpenGolfMap client and verified atomic course installation
 - `src/positioning`: gpsd, route replay, and manual providers

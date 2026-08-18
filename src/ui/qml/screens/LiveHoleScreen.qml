@@ -7,6 +7,8 @@ PageScaffold {
     anchors.fill: parent
     backgroundColor: Theme.focusBackground
     property bool drawerOpen: false
+    readonly property bool hasLastTrackedStroke:
+        app.lastRecordedStroke && app.lastRecordedStroke.sequence !== undefined
 
     function signedDelta(value) {
         var rounded = Math.round(value);
@@ -15,6 +17,32 @@ PageScaffold {
         if (rounded < 0)
             return "−" + Math.abs(rounded);
         return "0";
+    }
+
+    function strokeTypeLabel(type) {
+        if (type === "drive") return qsTr("Drive");
+        if (type === "approach") return qsTr("Approach");
+        if (type === "chip") return qsTr("Chip");
+        if (type === "putt") return qsTr("Putt");
+        return qsTr("Unknown");
+    }
+
+    function lastStrokeDetail() {
+        if (!hasLastTrackedStroke)
+            return "";
+        return app.lastRecordedStroke.hasGps
+            ? (app.lastRecordedStroke.distance !== undefined
+                ? app.distanceText(app.lastRecordedStroke.distance)
+                : qsTr("GPS"))
+            : qsTr("No GPS");
+    }
+
+    function clubTypeForId(id) {
+        for (var index = 0; index < app.clubs.length; ++index) {
+            if (app.clubs[index].id === id)
+                return app.clubs[index].type || "other";
+        }
+        return "other";
     }
 
     IconButton {
@@ -47,7 +75,7 @@ PageScaffold {
         anchors.left: parent.left
         anchors.right: liveMap.left
         anchors.top: holeHeader.bottom
-        anchors.bottom: bottomNav.top
+        anchors.bottom: strokeTracker.top
         clip: true
 
         // Only the information pane participates in the carousel. The map is
@@ -169,6 +197,13 @@ PageScaffold {
                                     fillMode: Image.PreserveAspectFit
                                     rotation: app.windRelativeDegrees + 135
                                     smooth: true
+
+                                    Behavior on rotation {
+                                        NumberAnimation {
+                                            duration: Theme.motionSlow
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
                             }
 
@@ -316,6 +351,134 @@ PageScaffold {
         anchors.bottom: bottomNav.top
         width: 306
         onOpenRequested: app.navigateTo("RoundMapScreen")
+    }
+
+    Item {
+        id: strokeTracker
+        anchors.left: parent.left
+        anchors.right: liveMap.left
+        anchors.bottom: bottomNav.top
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        height: 72
+        z: 8
+
+        Text {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 20
+            text: qsTr("%1 tracked").arg(app.recordedStrokeCount) + " · "
+                  + (app.shotGpsAvailable
+                     ? qsTr("GPS will be saved")
+                     : qsTr("No GPS — records anyway"))
+            color: app.shotGpsAvailable ? Theme.textMuted : Theme.amber
+            font.family: "Inter"
+            font.pixelSize: Theme.px(11)
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            height: Theme.touch
+            spacing: 8
+
+            Rectangle {
+                id: lastStrokeChip
+                visible: root.hasLastTrackedStroke
+                enabled: app.canUndoRecordedStroke
+                width: visible ? 160 : 0
+                height: Theme.touch
+                radius: Theme.radius
+                color: lastStrokeTap.pressed
+                       ? Theme.controlPressed : Theme.surfaceRaised
+                border.width: 1
+                border.color: Theme.border
+                opacity: enabled ? 1 : 0.45
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Edit last recorded stroke type")
+                Accessible.onPressAction: strokeTypeSheet.open()
+
+                ClubArtwork {
+                    id: lastClubArtwork
+                    anchors.left: parent.left
+                    anchors.leftMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 36
+                    height: 42
+                    visible: app.lastRecordedStroke.clubId !== undefined
+                    clubType: root.clubTypeForId(app.lastRecordedStroke.clubId)
+                }
+
+                Column {
+                    anchors.left: lastClubArtwork.visible
+                                  ? lastClubArtwork.right : parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: lastClubArtwork.visible ? 2 : 10
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+
+                    Text {
+                        width: parent.width
+                        text: app.lastRecordedStroke.clubName !== undefined
+                              ? app.lastRecordedStroke.clubName
+                              : qsTr("Last stroke")
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(11)
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        width: parent.width
+                        text: root.strokeTypeLabel(app.lastRecordedStroke.type) +
+                              " · " + root.lastStrokeDetail()
+                        color: Theme.textMuted
+                        font.family: "Inter"
+                        font.pixelSize: Theme.px(9)
+                        elide: Text.ElideRight
+                    }
+                }
+
+                TapHandler {
+                    id: lastStrokeTap
+                    enabled: lastStrokeChip.enabled
+                    onTapped: strokeTypeSheet.open()
+                }
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionFast }
+                }
+            }
+
+            AppButton {
+                visible: root.hasLastTrackedStroke
+                width: visible ? 72 : 0
+                height: Theme.touch
+                text: qsTr("Undo")
+                variant: "surface"
+                compact: true
+                enabled: app.canUndoRecordedStroke
+                accessibleName: qsTr("Undo last recorded stroke")
+                onClicked: app.undoLastRecordedStroke()
+            }
+
+            AppButton {
+                width: root.hasLastTrackedStroke ? 176 : 232
+                height: Theme.touch
+                text: qsTr("Record stroke")
+                variant: "primary"
+                compact: true
+                accessibleName: app.shotGpsAvailable
+                    ? qsTr("Record stroke with GPS")
+                    : qsTr("Record stroke without GPS")
+                onClicked: clubPicker.open()
+            }
+        }
     }
 
     BottomNav {
@@ -488,5 +651,112 @@ PageScaffold {
         destructive: true
         confirmText: qsTr("Abandon")
         onConfirmed: app.abandonRound()
+    }
+
+    ClubPickerSheet {
+        id: clubPicker
+        onClubSelected: clubId => {
+            if (clubId.length > 0)
+                app.recordStrokeWithClub(clubId);
+            else
+                app.recordStroke();
+        }
+    }
+
+    Popup {
+        id: strokeTypeSheet
+        parent: Overlay.overlay
+        x: parent ? (parent.width - width) / 2 : 75
+        y: parent ? parent.height - height : 300
+        width: Math.min(parent ? parent.width - 28 : 650, 650)
+        height: 172
+        modal: true
+        focus: true
+        padding: 14
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            color: Theme.surface
+            radius: Theme.sheetRadius
+            border.width: 1
+            border.color: Theme.border
+        }
+
+        Text {
+            id: typeSheetTitle
+            anchors.left: parent.left
+            anchors.top: parent.top
+            text: qsTr("Correct stroke type")
+            color: Theme.text
+            font.family: "Inter"
+            font.weight: Font.Bold
+            font.pixelSize: Theme.px(18)
+        }
+
+        IconButton {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: -8
+            anchors.rightMargin: -8
+            transparent: true
+            iconSource: "../../assets/icons/lucide/x.svg"
+            iconColor: Theme.text
+            accessibleName: qsTr("Close stroke type picker")
+            onClicked: strokeTypeSheet.close()
+        }
+
+        Row {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 82
+            spacing: 8
+
+            Repeater {
+                model: [
+                    { text: qsTr("Drive"), value: "drive", color: Theme.water },
+                    { text: qsTr("Approach"), value: "approach", color: Theme.fairway },
+                    { text: qsTr("Chip"), value: "chip", color: Theme.amber },
+                    { text: qsTr("Putt"), value: "putt", color: Theme.text },
+                    { text: qsTr("Unknown"), value: "unknown", color: Theme.textMuted }
+                ]
+
+                Button {
+                    id: typeButton
+                    required property var modelData
+                    width: (parent.width - 32) / 5
+                    height: parent.height
+                    padding: 0
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Set stroke type to %1").arg(modelData.text)
+                    onClicked: {
+                        if (app.setLastRecordedStrokeType(modelData.value))
+                            strokeTypeSheet.close();
+                    }
+
+                    contentItem: Text {
+                        text: typeButton.modelData.text
+                        color: typeButton.modelData.color
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(12)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+
+                    background: Rectangle {
+                        radius: Theme.radius
+                        color: typeButton.down ? Theme.controlPressed
+                                               : Theme.surfaceRaised
+                        border.width: app.lastRecordedStroke.type ===
+                                      typeButton.modelData.value ? 2 : 1
+                        border.color: app.lastRecordedStroke.type ===
+                                      typeButton.modelData.value
+                                      ? typeButton.modelData.color : Theme.border
+                    }
+                }
+            }
+        }
     }
 }

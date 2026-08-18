@@ -35,6 +35,12 @@ class CourseMapItem : public QQuickPaintedItem {
     Q_PROPERTY(bool measurementToTarget READ measurementToTarget WRITE
                    setMeasurementToTarget NOTIFY measurementChanged)
     Q_PROPERTY(bool metric READ metric WRITE setMetric NOTIFY measurementChanged)
+    Q_PROPERTY(QVariantList shotTrail READ shotTrail WRITE setShotTrail
+                   NOTIFY shotTrailChanged)
+    Q_PROPERTY(bool showShotTrailLabels READ showShotTrailLabels WRITE
+                   setShowShotTrailLabels NOTIFY shotTrailChanged)
+    Q_PROPERTY(QVariantMap shotTrailColors READ shotTrailColors WRITE
+                   setShotTrailColors NOTIFY shotTrailChanged)
     Q_PROPERTY(double measuredDistanceMetres READ measuredDistanceMetres
                    NOTIFY measurementChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY statusChanged)
@@ -72,6 +78,12 @@ public:
     void setMeasurementToTarget(bool value);
     [[nodiscard]] bool metric() const;
     void setMetric(bool value);
+    [[nodiscard]] QVariantList shotTrail() const;
+    void setShotTrail(const QVariantList& trail);
+    [[nodiscard]] bool showShotTrailLabels() const;
+    void setShowShotTrailLabels(bool value);
+    [[nodiscard]] QVariantMap shotTrailColors() const;
+    void setShotTrailColors(const QVariantMap& colors);
     [[nodiscard]] double measuredDistanceMetres() const;
     [[nodiscard]] bool ready() const;
     [[nodiscard]] QString errorText() const;
@@ -85,6 +97,7 @@ signals:
     void playerChanged();
     void viewTransformChanged();
     void measurementChanged();
+    void shotTrailChanged();
     void statusChanged();
     void loadError(const QString& message);
 
@@ -95,6 +108,7 @@ private:
     QColor colorFor(const QString& kind) const;
     QTransform mapToItemTransform() const;
     QVector<QPointF> measurementPath() const;
+    void paintShotTrail(QPainter* painter) const;
     void paintMeasurements(QPainter* painter) const;
     void paintPlayer(QPainter* painter) const;
 
@@ -112,6 +126,9 @@ private:
     bool m_measurementFromPlayer = true;
     bool m_measurementToTarget = false;
     bool m_metric = true;
+    QVariantList m_shotTrail;
+    bool m_showShotTrailLabels = true;
+    QVariantMap m_shotTrailColors;
     QPointF m_target;
     bool m_targetVisible = false;
     QRectF m_viewBox{-50.0, -50.0, 100.0, 100.0};

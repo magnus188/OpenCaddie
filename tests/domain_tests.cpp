@@ -5,6 +5,7 @@
 #include "domain/PlaysLike.h"
 #include "domain/Scoring.h"
 #include "domain/Settings.h"
+#include "domain/ShotTracking.h"
 #include "domain/Statistics.h"
 
 #include <cmath>
@@ -105,6 +106,48 @@ int main() {
               "projection latitude round-trip");
     checkNear(roundTrip.longitude, nearby.longitude, 1e-10,
               "projection longitude round-trip");
+
+    const GeoPoint greenCentre{59.0, 10.0};
+    const LocalProjection greenProjection{greenCentre};
+    const std::vector<GeoPoint> greenPolygon{
+        unprojectFromLocal(-10.0, -10.0, greenProjection),
+        unprojectFromLocal(10.0, -10.0, greenProjection),
+        unprojectFromLocal(10.0, 10.0, greenProjection),
+        unprojectFromLocal(-10.0, 10.0, greenProjection),
+    };
+    const GeoPoint teeStart =
+        unprojectFromLocal(0.0, 180.0, greenProjection);
+    check(classifyTrackedStroke(4, 0, 0, true, teeStart, greenPolygon) ==
+              StrokeType::Drive,
+          "first par-four stroke is a drive");
+    check(classifyTrackedStroke(3, 0, 0, true, teeStart, greenPolygon) ==
+              StrokeType::Approach,
+          "first par-three stroke is an approach");
+    const GeoPoint greenEdge =
+        unprojectFromLocal(10.0, 0.0, greenProjection);
+    check(classifyTrackedStroke(4, 2, 2, true, greenEdge, greenPolygon) ==
+              StrokeType::Putt,
+          "a stroke starting on the green polygon edge is a putt");
+    const GeoPoint chipBoundary =
+        unprojectFromLocal(0.0, 60.0, greenProjection);
+    check(classifyTrackedStroke(4, 1, 1, true, chipBoundary, greenPolygon) ==
+              StrokeType::Chip,
+          "fifty metres from the green edge is a chip");
+    const GeoPoint approachStart =
+        unprojectFromLocal(0.0, 60.1, greenProjection);
+    check(classifyTrackedStroke(4, 1, 1, true, approachStart, greenPolygon) ==
+              StrokeType::Approach,
+          "beyond the chip boundary is an approach");
+    check(classifyTrackedStroke(4, 0, 0, false, teeStart, greenPolygon) ==
+              StrokeType::Unknown,
+          "missing landing GPS produces an unknown stroke");
+    check(classifyTrackedStroke(4, 0, 0, true, std::nullopt, greenPolygon) ==
+              StrokeType::Unknown,
+          "missing tee geometry produces an unknown stroke");
+    const std::vector<GeoPoint> invalidGreen{greenCentre, greenCentre, greenCentre};
+    check(classifyTrackedStroke(4, 0, 0, true, teeStart, invalidGreen) ==
+              StrokeType::Unknown,
+          "unusable green geometry produces an unknown stroke");
 
     const auto now = std::chrono::system_clock::now();
     check(isUsableFix({oslo, 8.0, now, true}, now), "fresh accurate GPS fix is usable");

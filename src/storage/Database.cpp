@@ -196,7 +196,26 @@ const QStringList Migration6{
                    "ON round_layups(round_id,hole,sequence)"),
 };
 
-constexpr int LatestSchemaVersion = 6;
+const QStringList Migration7{
+    QStringLiteral(
+        "ALTER TABLE clubs ADD COLUMN club_type TEXT NOT NULL DEFAULT 'other' "
+        "CHECK(club_type IN ('driver','wood','hybrid','iron','wedge','putter',"
+        "'other'))"),
+    QStringLiteral(
+        "UPDATE clubs SET club_type=CASE "
+        "WHEN lower(trim(name)) LIKE '%putter%' THEN 'putter' "
+        "WHEN lower(trim(name)) LIKE '%driver%' THEN 'driver' "
+        "WHEN lower(trim(name)) LIKE '%hybrid%' "
+        "OR lower(trim(name)) LIKE '%rescue%' THEN 'hybrid' "
+        "WHEN lower(trim(name)) LIKE '%wood%' THEN 'wood' "
+        "WHEN lower(trim(name)) LIKE '%wedge%' "
+        "OR lower(trim(name)) IN ('pw','gw','aw','sw','lw') THEN 'wedge' "
+        "WHEN lower(trim(name)) LIKE '%iron%' "
+        "OR lower(trim(name)) LIKE '%jern%' THEN 'iron' "
+        "ELSE 'other' END"),
+};
+
+constexpr int LatestSchemaVersion = 7;
 
 } // namespace
 
@@ -324,6 +343,15 @@ bool Database::applyMigrations() {
     }
     if (version < 6) {
         for (const auto &statement : Migration6) {
+            if (!execute(statement)) {
+                database.rollback();
+                return false;
+            }
+        }
+        version = 6;
+    }
+    if (version < 7) {
+        for (const auto &statement : Migration7) {
             if (!execute(statement)) {
                 database.rollback();
                 return false;

@@ -13,6 +13,17 @@ Rectangle {
     border.color: Theme.fairway
     visible: opacity > 0
     opacity: 0
+    scale: opacity > 0 ? 1 : 0.985
+
+    transform: Translate {
+        y: banner.opacity > 0 ? 0 : -10
+        Behavior on y {
+            NumberAnimation {
+                duration: Theme.motionSheet
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
 
     function showForHole(number) {
         hole = number
@@ -75,5 +86,12 @@ Rectangle {
 
     Behavior on opacity {
         NumberAnimation { duration: Theme.motionSheet; easing.type: Easing.OutCubic }
+    }
+    Behavior on scale {
+        NumberAnimation {
+            duration: Theme.motionSheet
+            easing.type: Easing.OutBack
+            easing.overshoot: 0.5
+        }
     }
 }

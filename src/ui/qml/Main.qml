@@ -99,8 +99,31 @@ ApplicationWindow {
         color: Theme.overlay
         border.width: 1
         border.color: Theme.border
-        visible: app.message.length > 0
+        visible: opacity > 0
+        opacity: app.message.length > 0 ? 1 : 0
+        scale: app.message.length > 0 ? 1 : 0.98
         z: 100
+
+        transform: Translate {
+            y: app.message.length > 0 ? 0 : 10
+            Behavior on y {
+                NumberAnimation {
+                    duration: Theme.motionSheet
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motion }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.motionSheet
+                easing.type: Easing.OutBack
+                easing.overshoot: 0.5
+            }
+        }
 
         Text {
             id: messageText

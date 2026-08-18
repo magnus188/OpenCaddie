@@ -23,6 +23,31 @@ void writeFile(const QString &path, const QByteArray &contents) {
     require(file.open(QIODevice::WriteOnly), "fixture opens for writing");
     require(file.write(contents) == contents.size(), "fixture writes completely");
 }
+
+QImage render(opencaddie::ui::CourseMapItem &map) {
+    QImage image(static_cast<int>(map.width()), static_cast<int>(map.height()),
+                 QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    map.paint(&painter);
+    painter.end();
+    return image;
+}
+
+int changedPixels(const QImage &first, const QImage &second) {
+    require(first.size() == second.size(), "render comparison has matching size");
+    int changed = 0;
+    for (int y = 0; y < first.height(); ++y) {
+        const auto *firstLine =
+            reinterpret_cast<const QRgb *>(first.constScanLine(y));
+        const auto *secondLine =
+            reinterpret_cast<const QRgb *>(second.constScanLine(y));
+        for (int x = 0; x < first.width(); ++x) {
+            if (firstLine[x] != secondLine[x]) ++changed;
+        }
+    }
+    return changed;
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -61,11 +86,7 @@ int main(int argc, char **argv) {
     require(map.ready(), "wrapped OpenGolfMap model is ready");
     require(map.errorText().isEmpty(), "valid model has no error");
 
-    QImage image(320, 420, QImage::Format_ARGB32_Premultiplied);
-    image.fill(Qt::transparent);
-    QPainter painter(&image);
-    map.paint(&painter);
-    painter.end();
+    QImage image = render(map);
     int renderedPixels = 0;
     for (int y = 0; y < image.height(); ++y) {
         const auto *line = reinterpret_cast<const QRgb *>(image.constScanLine(y));
@@ -74,6 +95,46 @@ int main(int argc, char **argv) {
         }
     }
     require(renderedPixels > 4'000, "course geometry renders non-empty pixels");
+
+    const QVariantList shotTrail{
+        QVariantMap{{QStringLiteral("sequence"), 1},
+                    {QStringLiteral("type"), QStringLiteral("drive")},
+                    {QStringLiteral("startX"), 60.0},
+                    {QStringLiteral("startY"), 20.0},
+                    {QStringLiteral("endX"), 60.0},
+                    {QStringLiteral("endY"), 150.0},
+                    {QStringLiteral("distance"), 130.0}},
+        QVariantMap{{QStringLiteral("sequence"), 2},
+                    {QStringLiteral("type"), QStringLiteral("chip")},
+                    {QStringLiteral("endX"), 70.0},
+                    {QStringLiteral("endY"), 170.0}},
+        QVariantMap{{QStringLiteral("sequence"), 3},
+                    {QStringLiteral("type"), QStringLiteral("unknown")}},
+    };
+    map.setShotTrail(shotTrail);
+    require(map.shotTrail().size() == 3,
+            "locationless strokes remain in the trail payload");
+    const QImage labelledTrail = render(map);
+    require(changedPixels(image, labelledTrail) > 150,
+            "segments, numbered landings and endpoint-only markers render");
+
+    map.setShowShotTrailLabels(false);
+    const QImage compactTrail = render(map);
+    require(changedPixels(labelledTrail, compactTrail) > 20,
+            "compact trail suppresses distance labels");
+
+    map.setZoom(1.8);
+    map.setPanX(18.0);
+    map.setPanY(-12.0);
+    map.setRotationDegrees(24.0);
+    const QImage transformedTrail = render(map);
+    require(changedPixels(compactTrail, transformedTrail) > 500,
+            "trail follows zoom, pan and rotation transforms");
+
+    map.setZoom(1.0);
+    map.setPanX(0.0);
+    map.setPanY(0.0);
+    map.setRotationDegrees(0.0);
 
     map.setHole(2);
     require(map.ready(), "second hole selection remains renderable");

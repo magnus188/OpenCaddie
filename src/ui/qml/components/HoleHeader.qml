@@ -8,6 +8,13 @@ Item {
     property int hole: 1
     property int par: 4
     property int strokeIndex: 1
+    property bool ready: false
+
+    onHoleChanged: {
+        if (ready)
+            holePulse.restart()
+    }
+    Component.onCompleted: ready = true
 
     implicitWidth: 276
     implicitHeight: 82
@@ -36,6 +43,7 @@ Item {
                 }
 
                 Text {
+                    id: holeNumber
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: header.hole
                     color: Theme.amber
@@ -65,6 +73,27 @@ Item {
             height: parent.height
             label: qsTr("Index")
             value: header.strokeIndex
+        }
+    }
+
+    SequentialAnimation {
+        id: holePulse
+        NumberAnimation {
+            target: holeNumber
+            property: "scale"
+            from: 0.92
+            to: 1.04
+            duration: Theme.motionFast
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: holeNumber
+            property: "scale"
+            from: 1.04
+            to: 1
+            duration: Theme.motion
+            easing.type: Easing.OutBack
+            easing.overshoot: 0.45
         }
     }
 

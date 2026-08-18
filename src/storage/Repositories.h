@@ -32,7 +32,8 @@ class ClubRepository {
     bool ensureStarterBag();
     QString defaultProfileId() const;
     std::vector<domain::Club> list(const QString &profileId) const;
-    QString create(const QString &profileId, const QString &name, double carryMetres);
+    QString create(const QString &profileId, const QString &name, double carryMetres,
+                   domain::ClubType type, bool enabled = true);
     bool update(const domain::Club &club);
     bool remove(const QString &id);
     bool reorder(const QStringList &orderedIds);
@@ -67,6 +68,7 @@ struct ActiveRound {
     int courseHandicap = 0;
     domain::ScoringMode scoringMode = domain::ScoringMode::StrokePlay;
     int currentHole = 1;
+    QString tee;
     std::optional<double> weatherTemperatureC;
     std::optional<double> weatherWindMps;
     std::optional<int> weatherWindDirectionDegrees;
@@ -147,6 +149,15 @@ class ShotRepository {
   public:
     explicit ShotRepository(QSqlDatabase database);
     bool upsert(const ShotRecord &shot);
+    std::vector<ShotRecord> list(const QString &roundId,
+                                 const QString &participantId, int hole) const;
+    bool appendTrackedStroke(const ShotRecord &shot, const ActiveRound &round,
+                             const domain::HoleDefinition &hole);
+    bool removeLastTrackedStroke(const ActiveRound &round,
+                                 const domain::HoleDefinition &hole);
+    bool updateLastTrackedStrokeType(const ActiveRound &round,
+                                     const domain::HoleDefinition &hole,
+                                     const QString &shotType);
 
   private:
     QSqlDatabase m_database;

@@ -12,6 +12,7 @@
 #include <QUuid>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <unordered_map>
@@ -61,6 +62,279 @@ domain::FairwayResult fairway(const QString &value) {
         return domain::FairwayResult::Missed;
     return domain::FairwayResult::NotRecorded;
 }
+
+QString clubType(const domain::ClubType value) {
+    switch (value) {
+    case domain::ClubType::Driver:
+        return QStringLiteral("driver");
+    case domain::ClubType::Wood:
+        return QStringLiteral("wood");
+    case domain::ClubType::Hybrid:
+        return QStringLiteral("hybrid");
+    case domain::ClubType::Iron:
+        return QStringLiteral("iron");
+    case domain::ClubType::Wedge:
+        return QStringLiteral("wedge");
+    case domain::ClubType::Putter:
+        return QStringLiteral("putter");
+    case domain::ClubType::Other:
+        return QStringLiteral("other");
+    }
+    return QStringLiteral("other");
+}
+
+domain::ClubType clubType(const QString &value) {
+    if (value == QStringLiteral("driver"))
+        return domain::ClubType::Driver;
+    if (value == QStringLiteral("wood"))
+        return domain::ClubType::Wood;
+    if (value == QStringLiteral("hybrid"))
+        return domain::ClubType::Hybrid;
+    if (value == QStringLiteral("iron"))
+        return domain::ClubType::Iron;
+    if (value == QStringLiteral("wedge"))
+        return domain::ClubType::Wedge;
+    if (value == QStringLiteral("putter"))
+        return domain::ClubType::Putter;
+    return domain::ClubType::Other;
+}
+
+bool validOptionalNumber(const std::optional<double> &value) {
+    return !value || std::isfinite(*value);
+}
+
+bool validOptionalCoordinate(const std::optional<double> &value,
+                             const double minimum, const double maximum) {
+    return validOptionalNumber(value) &&
+           (!value || (*value >= minimum && *value <= maximum));
+}
+
+bool validShotRecord(const ShotRecord &shot) {
+    if (shot.roundId.isEmpty() || shot.participantId.isEmpty() || shot.hole < 1 ||
+        shot.hole > 18 || shot.sequence < 1 ||
+        shot.startLatitude.has_value() != shot.startLongitude.has_value() ||
+        shot.endLatitude.has_value() != shot.endLongitude.has_value() ||
+        !validOptionalCoordinate(shot.startLatitude, -90.0, 90.0) ||
+        !validOptionalCoordinate(shot.startLongitude, -180.0, 180.0) ||
+        !validOptionalCoordinate(shot.endLatitude, -90.0, 90.0) ||
+        !validOptionalCoordinate(shot.endLongitude, -180.0, 180.0) ||
+        !validOptionalNumber(shot.distanceMetres) ||
+        (shot.distanceMetres && *shot.distanceMetres < 0.0) ||
+        !validOptionalNumber(shot.lateralMetres) ||
+        !validOptionalNumber(shot.accuracyMetres) ||
+        (shot.accuracyMetres && *shot.accuracyMetres < 0.0)) {
+        return false;
+    }
+    return std::ranges::all_of(shot.metrics, [](const ShotRecord::Metric &metric) {
+        return !metric.key.trimmed().isEmpty() &&
+               std::isfinite(metric.canonicalValue) &&
+               (!metric.sourceValue || std::isfinite(*metric.sourceValue));
+    });
+}
+
+bool saveScoreRow(QSqlDatabase database, const ActiveRound &round,
+                  const domain::HoleDefinition &hole,
+                  const domain::HoleScore &score) {
+    if (score.hole != hole.number || score.hole < 1 || score.hole > round.holeCount ||
+        score.strokes < 0) {
+        return false;
+    }
+    QSqlQuery query(database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO hole_scores(round_id,participant_id,hole,par,stroke_index,"
+        "strokes,putts,penalties,fairway,gir,tee,notes,updated_at)"
+        " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(round_id,participant_id,hole) DO UPDATE SET "
+        "par=excluded.par,stroke_index=excluded.stroke_index,"
+        "strokes=excluded.strokes,putts=excluded.putts,"
+        "penalties=excluded.penalties,fairway=excluded.fairway,gir=excluded.gir,"
+        "tee=excluded.tee,notes=excluded.notes,updated_at=excluded.updated_at"));
+    query.addBindValue(round.id);
+    query.addBindValue(round.participantId);
+    query.addBindValue(score.hole);
+    query.addBindValue(hole.par);
+    query.addBindValue(hole.strokeIndex);
+    query.addBindValue(score.strokes);
+    query.addBindValue(score.putts ? QVariant(*score.putts) : QVariant{});
+    query.addBindValue(score.penalties);
+    query.addBindValue(fairway(score.fairway));
+    query.addBindValue(score.greenInRegulation
+                           ? QVariant(*score.greenInRegulation)
+                           : QVariant{});
+    query.addBindValue(QString::fromStdString(score.tee));
+    query.addBindValue(QString::fromStdString(score.notes));
+    query.addBindValue(nowIso());
+    return query.exec();
+}
+
+bool activeRoundIdentity(QSqlDatabase database, const ActiveRound &round,
+                         const int hole) {
+    QSqlQuery query(database);
+    query.prepare(QStringLiteral(
+        "SELECT 1 FROM rounds r JOIN participants p ON p.round_id=r.id "
+        "WHERE r.id=? AND p.id=? AND r.status='in_progress' "
+        "AND ? BETWEEN 1 AND r.hole_count"));
+    query.addBindValue(round.id);
+    query.addBindValue(round.participantId);
+    query.addBindValue(hole);
+    return query.exec() && query.next();
+}
+
+bool incrementStoredScore(QSqlDatabase database, const ActiveRound &round,
+                          const domain::HoleDefinition &hole,
+                          const bool incrementPutts) {
+    QSqlQuery current(database);
+    current.prepare(QStringLiteral(
+        "SELECT strokes FROM hole_scores WHERE round_id=? AND participant_id=? "
+        "AND hole=?"));
+    current.addBindValue(round.id);
+    current.addBindValue(round.participantId);
+    current.addBindValue(hole.number);
+    if (!current.exec())
+        return false;
+    if (!current.next()) {
+        domain::HoleScore score{.hole = hole.number, .strokes = 1};
+        if (incrementPutts)
+            score.putts = 1;
+        return saveScoreRow(database, round, hole, score);
+    }
+    if (current.value(0).toInt() >= 20)
+        return false;
+    current.finish();
+
+    QSqlQuery update(database);
+    update.prepare(incrementPutts
+                       ? QStringLiteral(
+                             "UPDATE hole_scores SET strokes=strokes+1,"
+                             "putts=COALESCE(putts,0)+1,updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?")
+                       : QStringLiteral(
+                             "UPDATE hole_scores SET strokes=strokes+1,updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?"));
+    update.addBindValue(nowIso());
+    update.addBindValue(round.id);
+    update.addBindValue(round.participantId);
+    update.addBindValue(hole.number);
+    return update.exec() && update.numRowsAffected() == 1;
+}
+
+bool decrementStoredScore(QSqlDatabase database, const ActiveRound &round,
+                          const domain::HoleDefinition &hole,
+                          const bool decrementPutts) {
+    QSqlQuery current(database);
+    current.prepare(QStringLiteral(
+        "SELECT strokes,putts,penalties,fairway,gir,tee,notes FROM hole_scores "
+        "WHERE round_id=? AND participant_id=? AND hole=?"));
+    current.addBindValue(round.id);
+    current.addBindValue(round.participantId);
+    current.addBindValue(hole.number);
+    if (!current.exec() || !current.next() || current.value(0).toInt() <= 0)
+        return false;
+    const int strokes = current.value(0).toInt();
+    const bool autoOnly = strokes == 1 && current.value(2).toInt() == 0 &&
+                          current.value(3).toString().isEmpty() &&
+                          current.value(4).isNull() &&
+                          current.value(5).toString().isEmpty() &&
+                          current.value(6).toString().isEmpty() &&
+                          (!decrementPutts || current.value(1).toInt() <= 1);
+    current.finish();
+    if (autoOnly) {
+        QSqlQuery remove(database);
+        remove.prepare(QStringLiteral(
+            "DELETE FROM hole_scores WHERE round_id=? AND participant_id=? "
+            "AND hole=?"));
+        remove.addBindValue(round.id);
+        remove.addBindValue(round.participantId);
+        remove.addBindValue(hole.number);
+        return remove.exec() && remove.numRowsAffected() == 1;
+    }
+
+    QSqlQuery update(database);
+    update.prepare(decrementPutts
+                       ? QStringLiteral(
+                             "UPDATE hole_scores SET strokes=strokes-1,"
+                             "putts=MAX(0,COALESCE(putts,0)-1),updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?")
+                       : QStringLiteral(
+                             "UPDATE hole_scores SET strokes=strokes-1,updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?"));
+    update.addBindValue(nowIso());
+    update.addBindValue(round.id);
+    update.addBindValue(round.participantId);
+    update.addBindValue(hole.number);
+    return update.exec() && update.numRowsAffected() == 1;
+}
+
+bool adjustStoredPutts(QSqlDatabase database, const ActiveRound &round,
+                       const domain::HoleDefinition &hole, const int delta) {
+    if (delta == 0)
+        return true;
+    QSqlQuery update(database);
+    update.prepare(delta > 0
+                       ? QStringLiteral(
+                             "UPDATE hole_scores SET "
+                             "putts=COALESCE(putts,0)+1,updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?")
+                       : QStringLiteral(
+                             "UPDATE hole_scores SET "
+                             "putts=MAX(0,COALESCE(putts,0)-1),updated_at=? "
+                             "WHERE round_id=? AND participant_id=? AND hole=?"));
+    update.addBindValue(nowIso());
+    update.addBindValue(round.id);
+    update.addBindValue(round.participantId);
+    update.addBindValue(hole.number);
+    return update.exec() && update.numRowsAffected() == 1;
+}
+
+QString canonicalShotType(const QString &value) {
+    if (value == QStringLiteral("tee"))
+        return QStringLiteral("drive");
+    static const QSet<QString> allowed{
+        QStringLiteral("drive"), QStringLiteral("approach"),
+        QStringLiteral("chip"), QStringLiteral("putt"),
+        QStringLiteral("unknown"),
+    };
+    return allowed.contains(value) ? value : QStringLiteral("unknown");
+}
+
+struct ShotTypeCounts {
+    std::array<int, 5> values{};
+
+    void add(const QString &rawType, const int amount = 1) {
+        const QString type = canonicalShotType(rawType);
+        const int index = type == QStringLiteral("drive")      ? 0
+                          : type == QStringLiteral("approach") ? 1
+                          : type == QStringLiteral("chip")     ? 2
+                          : type == QStringLiteral("putt")     ? 3
+                                                               : 4;
+        values[static_cast<std::size_t>(index)] += amount;
+    }
+
+    [[nodiscard]] int total() const {
+        int result = 0;
+        for (const int value : values)
+            result += value;
+        return result;
+    }
+
+    [[nodiscard]] QVariantList distribution() const {
+        static const std::array<const char *, 5> keys{
+            "drive", "approach", "chip", "putt", "unknown"};
+        QVariantList result;
+        const int count = total();
+        for (std::size_t index = 0; index < keys.size(); ++index) {
+            result.push_back(QVariantMap{
+                {QStringLiteral("key"), QString::fromLatin1(keys[index])},
+                {QStringLiteral("count"), values[index]},
+                {QStringLiteral("percentage"),
+                 count > 0 ? 100.0 * static_cast<double>(values[index]) /
+                                 static_cast<double>(count)
+                           : 0.0},
+            });
+        }
+        return result;
+    }
+};
 
 bool execute(QSqlQuery &query) { return query.exec(); }
 } // namespace
@@ -126,6 +400,12 @@ bool ClubRepository::ensureDefaultProfile() {
 }
 
 bool ClubRepository::ensureStarterBag() {
+    static const QString initializedKey =
+        QStringLiteral("starterBagInitialized");
+    SettingsRepository settings(m_database);
+    if (settings.value(initializedKey) == QStringLiteral("1"))
+        return true;
+
     const QString profileId = defaultProfileId();
     if (profileId.isEmpty())
         return false;
@@ -136,21 +416,32 @@ bool ClubRepository::ensureStarterBag() {
     if (!count.exec() || !count.next())
         return false;
     if (count.value(0).toInt() > 0)
-        return true;
+        return settings.setValue(initializedKey, QStringLiteral("1"));
 
-    static const std::pair<const char *, double> starterClubs[] = {
-        {"Driver", 215.0},         {"5 iron", 175.0},    {"7 iron", 145.0},
-        {"Pitching wedge", 105.0}, {"Sand wedge", 75.0}, {"Putter", 10.0},
+    struct StarterClub {
+        const char *name;
+        double carryMetres;
+        domain::ClubType type;
+    };
+    static const StarterClub starterClubs[] = {
+        {"Driver", 215.0, domain::ClubType::Driver},
+        {"5 iron", 175.0, domain::ClubType::Iron},
+        {"7 iron", 145.0, domain::ClubType::Iron},
+        {"Pitching wedge", 105.0, domain::ClubType::Wedge},
+        {"Sand wedge", 75.0, domain::ClubType::Wedge},
+        {"Putter", 10.0, domain::ClubType::Putter},
     };
     if (!m_database.transaction())
         return false;
-    for (const auto &[name, carry] : starterClubs) {
-        if (create(profileId, QString::fromLatin1(name), carry).isEmpty()) {
+    for (const auto &[name, carry, type] : starterClubs) {
+        if (create(profileId, QString::fromLatin1(name), carry, type).isEmpty()) {
             m_database.rollback();
             return false;
         }
     }
-    return m_database.commit();
+    if (!m_database.commit())
+        return false;
+    return settings.setValue(initializedKey, QStringLiteral("1"));
 }
 
 QString ClubRepository::defaultProfileId() const {
@@ -167,7 +458,7 @@ std::vector<domain::Club> ClubRepository::list(const QString &profileId) const {
     std::vector<domain::Club> clubs;
     QSqlQuery query(m_database);
     query.prepare(
-        QStringLiteral("SELECT id,name,carry_metres,enabled,position FROM clubs "
+        QStringLiteral("SELECT id,name,carry_metres,enabled,position,club_type FROM clubs "
                        "WHERE profile_id=? ORDER BY position,name"));
     query.addBindValue(profileId);
     if (!query.exec())
@@ -176,13 +467,15 @@ std::vector<domain::Club> ClubRepository::list(const QString &profileId) const {
         clubs.push_back({query.value(0).toString().toStdString(),
                          query.value(1).toString().toStdString(),
                          query.value(2).toDouble(), query.value(3).toBool(),
-                         query.value(4).toInt()});
+                         query.value(4).toInt(),
+                         clubType(query.value(5).toString())});
     }
     return clubs;
 }
 
 QString ClubRepository::create(const QString &profileId, const QString &name,
-                               const double carryMetres) {
+                               const double carryMetres,
+                               const domain::ClubType type, const bool enabled) {
     const QString id = uuid();
     QSqlQuery position(m_database);
     position.prepare(QStringLiteral(
@@ -194,15 +487,16 @@ QString ClubRepository::create(const QString &profileId, const QString &name,
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
         "INSERT INTO clubs(id,profile_id,name,carry_metres,enabled,position,"
-        "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)"));
+        "created_at,updated_at,club_type) VALUES(?,?,?,?,?,?,?,?,?)"));
     query.addBindValue(id);
     query.addBindValue(profileId);
     query.addBindValue(name.trimmed());
     query.addBindValue(carryMetres);
-    query.addBindValue(1);
+    query.addBindValue(enabled);
     query.addBindValue(order);
     query.addBindValue(nowIso());
     query.addBindValue(nowIso());
+    query.addBindValue(clubType(type));
     return query.exec() ? id : QString{};
 }
 
@@ -210,12 +504,13 @@ bool ClubRepository::update(const domain::Club &club) {
     QSqlQuery query(m_database);
     query.prepare(
         QStringLiteral("UPDATE clubs SET name=?,carry_metres=?,enabled=?,position=?,"
-                       "updated_at=? WHERE id=?"));
+                       "updated_at=?,club_type=? WHERE id=?"));
     query.addBindValue(QString::fromStdString(club.name).trimmed());
     query.addBindValue(club.carryMetres);
     query.addBindValue(club.enabled);
     query.addBindValue(club.position);
     query.addBindValue(nowIso());
+    query.addBindValue(clubType(club.type));
     query.addBindValue(QString::fromStdString(club.id));
     return query.exec() && query.numRowsAffected() == 1;
 }
@@ -252,7 +547,7 @@ std::optional<ActiveRound> RoundRepository::active() const {
     QSqlQuery query(m_database);
     if (!query.exec(QStringLiteral(
             "SELECT r.id,p.id,r.course_slug,r.course_name,r.hole_count,"
-            "r.course_handicap,r.scoring_mode,r.current_hole,"
+            "r.course_handicap,r.scoring_mode,r.current_hole,r.tee,"
             "r.weather_temperature_c,r.weather_wind_mps,"
             "r.weather_wind_direction_deg,r.weather_condition "
             "FROM rounds r JOIN participants p ON p.round_id=r.id "
@@ -267,14 +562,15 @@ std::optional<ActiveRound> RoundRepository::active() const {
                       query.value(4).toInt(),
                       query.value(5).toInt(),
                       scoringMode(query.value(6).toString()),
-                      query.value(7).toInt()};
-    if (!query.value(8).isNull())
-        round.weatherTemperatureC = query.value(8).toDouble();
+                      query.value(7).toInt(),
+                      query.value(8).toString()};
     if (!query.value(9).isNull())
-        round.weatherWindMps = query.value(9).toDouble();
+        round.weatherTemperatureC = query.value(9).toDouble();
     if (!query.value(10).isNull())
-        round.weatherWindDirectionDegrees = query.value(10).toInt();
-    round.weatherCondition = query.value(11).toString();
+        round.weatherWindMps = query.value(10).toDouble();
+    if (!query.value(11).isNull())
+        round.weatherWindDirectionDegrees = query.value(11).toInt();
+    round.weatherCondition = query.value(12).toString();
     return round;
 }
 
@@ -341,7 +637,7 @@ std::optional<ActiveRound> RoundRepository::start(const RoundStart &start) {
     }
     ActiveRound started{
         roundId,         participantId,        start.courseSlug,  start.courseName,
-        start.holeCount, start.courseHandicap, start.scoringMode, 1};
+        start.holeCount, start.courseHandicap, start.scoringMode, 1, start.tee};
     started.weatherTemperatureC = start.weatherTemperatureC;
     started.weatherWindMps = start.weatherWindMps;
     started.weatherWindDirectionDegrees = start.weatherWindDirectionDegrees;
@@ -352,35 +648,10 @@ std::optional<ActiveRound> RoundRepository::start(const RoundStart &start) {
 bool RoundRepository::saveScore(const ActiveRound &round,
                                 const domain::HoleDefinition &hole,
                                 const domain::HoleScore &score) {
-    if (score.hole != hole.number || score.hole < 1 || score.hole > round.holeCount ||
-        score.strokes < 0 || !m_database.transaction()) {
+    if (!m_database.transaction()) {
         return false;
     }
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO hole_scores(round_id,participant_id,hole,par,stroke_index,"
-        "strokes,putts,penalties,fairway,gir,tee,notes,updated_at)"
-        " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
-        "ON CONFLICT(round_id,participant_id,hole) DO UPDATE SET "
-        "par=excluded.par,stroke_index=excluded.stroke_index,"
-        "strokes=excluded.strokes,putts=excluded.putts,"
-        "penalties=excluded.penalties,fairway=excluded.fairway,gir=excluded.gir,"
-        "tee=excluded.tee,notes=excluded.notes,updated_at=excluded.updated_at"));
-    query.addBindValue(round.id);
-    query.addBindValue(round.participantId);
-    query.addBindValue(score.hole);
-    query.addBindValue(hole.par);
-    query.addBindValue(hole.strokeIndex);
-    query.addBindValue(score.strokes);
-    query.addBindValue(score.putts ? QVariant(*score.putts) : QVariant{});
-    query.addBindValue(score.penalties);
-    query.addBindValue(fairway(score.fairway));
-    query.addBindValue(score.greenInRegulation ? QVariant(*score.greenInRegulation)
-                                               : QVariant{});
-    query.addBindValue(QString::fromStdString(score.tee));
-    query.addBindValue(QString::fromStdString(score.notes));
-    query.addBindValue(nowIso());
-    if (!query.exec()) {
+    if (!saveScoreRow(m_database, round, hole, score)) {
         m_database.rollback();
         return false;
     }
@@ -710,6 +981,18 @@ QVariantMap RoundRepository::detail(const QString &roundId,
         longestDrive.exec() && longestDrive.next() && !longestDrive.value(0).isNull()
             ? longestDrive.value(0).toDouble()
             : 0.0;
+    ShotTypeCounts shotCounts;
+    QSqlQuery shotTypes(m_database);
+    shotTypes.prepare(QStringLiteral(
+        "SELECT s.shot_type,COUNT(*) FROM shots s "
+        "JOIN participants p ON p.id=s.participant_id "
+        "JOIN rounds r ON r.id=s.round_id AND p.round_id=r.id "
+        "WHERE s.round_id=? AND p.profile_id=r.profile_id GROUP BY s.shot_type"));
+    shotTypes.addBindValue(roundId);
+    if (shotTypes.exec()) {
+        while (shotTypes.next())
+            shotCounts.add(shotTypes.value(0).toString(), shotTypes.value(1).toInt());
+    }
     result.insert(
         QStringLiteral("summary"),
         QVariantMap{
@@ -736,6 +1019,9 @@ QVariantMap RoundRepository::detail(const QString &roundId,
              greensRecorded > 0 ? 100.0 * greensHit / greensRecorded : 0.0},
             {QStringLiteral("greensRecorded"), greensRecorded},
             {QStringLiteral("longestDriveMetres"), longestDriveMetres},
+            {QStringLiteral("trackedStrokes"), shotCounts.total()},
+            {QStringLiteral("scoredStrokes"), gross},
+            {QStringLiteral("shotTypeDistribution"), shotCounts.distribution()},
             {QStringLiteral("albatrosses"), albatrosses},
             {QStringLiteral("eagles"), eagles},
             {QStringLiteral("birdies"), birdies},
@@ -930,32 +1216,8 @@ ShotRepository::ShotRepository(QSqlDatabase database)
     : m_database(std::move(database)) {}
 
 bool ShotRepository::upsert(const ShotRecord &shot) {
-    const auto finite = [](const std::optional<double> &value) {
-        return !value || std::isfinite(*value);
-    };
-    const auto coordinate = [&finite](const std::optional<double> &value,
-                                      const double minimum, const double maximum) {
-        return finite(value) && (!value || (*value >= minimum && *value <= maximum));
-    };
-    if (shot.roundId.isEmpty() || shot.participantId.isEmpty() || shot.hole < 1 ||
-        shot.hole > 18 || shot.sequence < 1 ||
-        shot.startLatitude.has_value() != shot.startLongitude.has_value() ||
-        shot.endLatitude.has_value() != shot.endLongitude.has_value() ||
-        !coordinate(shot.startLatitude, -90.0, 90.0) ||
-        !coordinate(shot.startLongitude, -180.0, 180.0) ||
-        !coordinate(shot.endLatitude, -90.0, 90.0) ||
-        !coordinate(shot.endLongitude, -180.0, 180.0) || !finite(shot.distanceMetres) ||
-        (shot.distanceMetres && *shot.distanceMetres < 0.0) ||
-        !finite(shot.lateralMetres) || !finite(shot.accuracyMetres) ||
-        (shot.accuracyMetres && *shot.accuracyMetres < 0.0)) {
+    if (!validShotRecord(shot))
         return false;
-    }
-    for (const auto &metric : shot.metrics) {
-        if (metric.key.trimmed().isEmpty() || !std::isfinite(metric.canonicalValue) ||
-            (metric.sourceValue && !std::isfinite(*metric.sourceValue))) {
-            return false;
-        }
-    }
     const QString source = shot.sourceProvider.isEmpty() ? QStringLiteral("opencaddie")
                                                          : shot.sourceProvider;
     QString shotId = shot.id;
@@ -1095,6 +1357,219 @@ bool ShotRepository::upsert(const ShotRecord &shot) {
         }
     }
     if (!m_database.commit()) {
+        m_database.rollback();
+        return false;
+    }
+    return true;
+}
+
+std::vector<ShotRecord> ShotRepository::list(const QString &roundId,
+                                             const QString &participantId,
+                                             const int hole) const {
+    std::vector<ShotRecord> shots;
+    if (roundId.isEmpty() || participantId.isEmpty() || hole < 1 || hole > 18)
+        return shots;
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT id,round_id,participant_id,hole,sequence,club_id,club_name,"
+        "shot_type,start_latitude,start_longitude,end_latitude,end_longitude,"
+        "distance_metres,lateral_metres,accuracy_metres,result,source_provider,"
+        "external_id,recorded_at FROM shots WHERE round_id=? AND participant_id=? "
+        "AND hole=? ORDER BY sequence"));
+    query.addBindValue(roundId);
+    query.addBindValue(participantId);
+    query.addBindValue(hole);
+    if (!query.exec())
+        return shots;
+    const auto optionalDouble = [&query](const int column) -> std::optional<double> {
+        return query.value(column).isNull()
+                   ? std::nullopt
+                   : std::optional<double>{query.value(column).toDouble()};
+    };
+    while (query.next()) {
+        ShotRecord shot;
+        shot.id = query.value(0).toString();
+        shot.roundId = query.value(1).toString();
+        shot.participantId = query.value(2).toString();
+        shot.hole = query.value(3).toInt();
+        shot.sequence = query.value(4).toInt();
+        shot.clubId = query.value(5).toString();
+        shot.clubName = query.value(6).toString();
+        shot.shotType = query.value(7).toString();
+        shot.startLatitude = optionalDouble(8);
+        shot.startLongitude = optionalDouble(9);
+        shot.endLatitude = optionalDouble(10);
+        shot.endLongitude = optionalDouble(11);
+        shot.distanceMetres = optionalDouble(12);
+        shot.lateralMetres = optionalDouble(13);
+        shot.accuracyMetres = optionalDouble(14);
+        shot.result = query.value(15).toString();
+        shot.sourceProvider = query.value(16).toString();
+        shot.externalId = query.value(17).toString();
+        shot.recordedAt = query.value(18).toString();
+        shots.push_back(std::move(shot));
+    }
+    return shots;
+}
+
+bool ShotRepository::appendTrackedStroke(const ShotRecord &input,
+                                         const ActiveRound &round,
+                                         const domain::HoleDefinition &hole) {
+    ShotRecord shot = input;
+    shot.sourceProvider = shot.sourceProvider.isEmpty()
+                              ? QStringLiteral("opencaddie")
+                              : shot.sourceProvider;
+    if (!validShotRecord(shot) || !shot.metrics.empty() ||
+        shot.sourceProvider != QStringLiteral("opencaddie") ||
+        canonicalShotType(shot.shotType) != shot.shotType ||
+        shot.roundId != round.id || shot.participantId != round.participantId ||
+        shot.hole != hole.number) {
+        return false;
+    }
+    if (shot.id.isEmpty())
+        shot.id = uuid();
+    if (shot.recordedAt.isEmpty())
+        shot.recordedAt = nowIso();
+    if (!m_database.transaction())
+        return false;
+    if (!activeRoundIdentity(m_database, round, shot.hole)) {
+        m_database.rollback();
+        return false;
+    }
+
+    QSqlQuery previous(m_database);
+    previous.prepare(QStringLiteral(
+        "SELECT COALESCE(MAX(sequence),0) FROM shots WHERE round_id=? AND "
+        "participant_id=? AND hole=?"));
+    previous.addBindValue(round.id);
+    previous.addBindValue(round.participantId);
+    previous.addBindValue(hole.number);
+    if (!previous.exec() || !previous.next() ||
+        shot.sequence != previous.value(0).toInt() + 1) {
+        m_database.rollback();
+        return false;
+    }
+    previous.finish();
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO shots(id,round_id,participant_id,hole,sequence,club_id,"
+        "club_name,shot_type,start_latitude,start_longitude,end_latitude,"
+        "end_longitude,distance_metres,lateral_metres,accuracy_metres,result,"
+        "source_provider,external_id,recorded_at)"
+        " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"));
+    query.addBindValue(shot.id);
+    query.addBindValue(shot.roundId);
+    query.addBindValue(shot.participantId);
+    query.addBindValue(shot.hole);
+    query.addBindValue(shot.sequence);
+    query.addBindValue(shot.clubId.isEmpty() ? QVariant{} : shot.clubId);
+    query.addBindValue(textOrEmpty(shot.clubName));
+    query.addBindValue(shot.shotType);
+    query.addBindValue(shot.startLatitude ? QVariant(*shot.startLatitude) : QVariant{});
+    query.addBindValue(shot.startLongitude ? QVariant(*shot.startLongitude)
+                                           : QVariant{});
+    query.addBindValue(shot.endLatitude ? QVariant(*shot.endLatitude) : QVariant{});
+    query.addBindValue(shot.endLongitude ? QVariant(*shot.endLongitude) : QVariant{});
+    query.addBindValue(shot.distanceMetres ? QVariant(*shot.distanceMetres)
+                                           : QVariant{});
+    query.addBindValue(shot.lateralMetres ? QVariant(*shot.lateralMetres) : QVariant{});
+    query.addBindValue(shot.accuracyMetres ? QVariant(*shot.accuracyMetres)
+                                           : QVariant{});
+    query.addBindValue(textOrEmpty(shot.result));
+    query.addBindValue(QStringLiteral("opencaddie"));
+    query.addBindValue(QVariant{});
+    query.addBindValue(shot.recordedAt);
+    if (!query.exec() ||
+        !incrementStoredScore(m_database, round, hole,
+                              shot.shotType == QStringLiteral("putt")) ||
+        !m_database.commit()) {
+        m_database.rollback();
+        return false;
+    }
+    return true;
+}
+
+bool ShotRepository::removeLastTrackedStroke(
+    const ActiveRound &round, const domain::HoleDefinition &hole) {
+    if (!m_database.transaction())
+        return false;
+    if (!activeRoundIdentity(m_database, round, hole.number)) {
+        m_database.rollback();
+        return false;
+    }
+    QSqlQuery latest(m_database);
+    latest.prepare(QStringLiteral(
+        "SELECT id,source_provider,shot_type FROM shots WHERE round_id=? AND participant_id=? "
+        "AND hole=? ORDER BY sequence DESC LIMIT 1"));
+    latest.addBindValue(round.id);
+    latest.addBindValue(round.participantId);
+    latest.addBindValue(hole.number);
+    if (!latest.exec() || !latest.next() ||
+        latest.value(1).toString() != QStringLiteral("opencaddie")) {
+        m_database.rollback();
+        return false;
+    }
+    const QString shotId = latest.value(0).toString();
+    const bool wasPutt = latest.value(2).toString() == QStringLiteral("putt");
+    latest.finish();
+    QSqlQuery remove(m_database);
+    remove.prepare(QStringLiteral("DELETE FROM shots WHERE id=?"));
+    remove.addBindValue(shotId);
+    if (!remove.exec() || remove.numRowsAffected() != 1 ||
+        !decrementStoredScore(m_database, round, hole, wasPutt) ||
+        !m_database.commit()) {
+        m_database.rollback();
+        return false;
+    }
+    return true;
+}
+
+bool ShotRepository::updateLastTrackedStrokeType(
+    const ActiveRound &round, const domain::HoleDefinition &hole,
+    const QString &shotType) {
+    if (canonicalShotType(shotType) != shotType || !m_database.transaction()) {
+        return false;
+    }
+    if (!activeRoundIdentity(m_database, round, hole.number)) {
+        m_database.rollback();
+        return false;
+    }
+    QSqlQuery latest(m_database);
+    latest.prepare(QStringLiteral(
+        "SELECT shot_type FROM shots WHERE round_id=? AND participant_id=? "
+        "AND hole=? ORDER BY sequence DESC LIMIT 1"));
+    latest.addBindValue(round.id);
+    latest.addBindValue(round.participantId);
+    latest.addBindValue(hole.number);
+    if (!latest.exec() || !latest.next()) {
+        m_database.rollback();
+        return false;
+    }
+    const QString previousType = latest.value(0).toString();
+    latest.finish();
+    if (previousType == shotType) {
+        return m_database.commit();
+    }
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral(
+        "UPDATE shots SET shot_type=? WHERE id=(SELECT id FROM shots "
+        "WHERE round_id=? AND participant_id=? AND hole=? "
+        "AND source_provider='opencaddie' AND sequence=(SELECT MAX(sequence) "
+        "FROM shots WHERE round_id=? AND participant_id=? AND hole=?))"));
+    update.addBindValue(shotType);
+    update.addBindValue(round.id);
+    update.addBindValue(round.participantId);
+    update.addBindValue(hole.number);
+    update.addBindValue(round.id);
+    update.addBindValue(round.participantId);
+    update.addBindValue(hole.number);
+    const int puttDelta = (shotType == QStringLiteral("putt") ? 1 : 0) -
+                          (previousType == QStringLiteral("putt") ? 1 : 0);
+    if (!update.exec() || update.numRowsAffected() != 1 ||
+        !adjustStoredPutts(m_database, round, hole, puttDelta) ||
+        !m_database.commit()) {
         m_database.rollback();
         return false;
     }
@@ -1378,6 +1853,28 @@ QVariantMap StatisticsRepository::overview(const QString &courseSlug,
             ? longestDrive.value(0).toDouble()
             : 0.0;
 
+    ShotTypeCounts shotCounts;
+    QSqlQuery shotTypes(m_database);
+    QString shotTypesSql = QStringLiteral(
+        "SELECT s.shot_type,COUNT(*) FROM shots s "
+        "JOIN rounds r ON r.id=s.round_id "
+        "JOIN participants p ON p.id=s.participant_id AND p.round_id=r.id "
+        "AND p.profile_id=r.profile_id WHERE r.status='completed'");
+    if (!profileId.isEmpty())
+        shotTypesSql += QStringLiteral(" AND r.profile_id=?");
+    if (!courseSlug.isEmpty())
+        shotTypesSql += QStringLiteral(" AND r.course_slug=?");
+    shotTypesSql += QStringLiteral(" GROUP BY s.shot_type");
+    shotTypes.prepare(shotTypesSql);
+    if (!profileId.isEmpty())
+        shotTypes.addBindValue(profileId);
+    if (!courseSlug.isEmpty())
+        shotTypes.addBindValue(courseSlug);
+    if (shotTypes.exec()) {
+        while (shotTypes.next())
+            shotCounts.add(shotTypes.value(0).toString(), shotTypes.value(1).toInt());
+    }
+
     QSqlQuery weather(m_database);
     QString weatherSql =
         QStringLiteral("SELECT COUNT(*) FROM rounds WHERE status='completed' AND "
@@ -1434,6 +1931,9 @@ QVariantMap StatisticsRepository::overview(const QString &courseSlug,
          greensRecorded > 0 ? 100.0 * greensHit / greensRecorded : 0.0},
         {QStringLiteral("longestDriveMetres"), longestDriveMetres},
         {QStringLiteral("longestDriveRecorded"), longestDriveMetres > 0.0},
+        {QStringLiteral("trackedStrokes"), shotCounts.total()},
+        {QStringLiteral("scoredStrokes"), gross},
+        {QStringLiteral("shotTypeDistribution"), shotCounts.distribution()},
         {QStringLiteral("puttsRecorded"), puttHoles},
         {QStringLiteral("fairwaysRecorded"), fairwaysRecorded},
         {QStringLiteral("fairwayDistribution"),

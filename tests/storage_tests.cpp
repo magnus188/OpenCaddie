@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <optional>
 
 namespace {
 
@@ -81,6 +82,34 @@ bool createLegacyV1Database(const QString &path) {
             QStringLiteral(
                 "INSERT INTO profiles VALUES('legacy-profile','Legacy player',"
                 "14.2,1,'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-driver','legacy-profile',"
+                "'Driver',215,1,0,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-wood','legacy-profile',"
+                "'5 wood',190,1,1,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-hybrid','legacy-profile',"
+                "'4 hybrid',180,1,2,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-iron','legacy-profile',"
+                "'7 iron',145,1,3,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-wedge','legacy-profile',"
+                "'Sand wedge',75,1,4,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-putter','legacy-profile',"
+                "'Putter',10,1,5,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
+            QStringLiteral(
+                "INSERT INTO clubs VALUES('legacy-other','legacy-profile',"
+                "'Old faithful',120,1,6,'2025-01-01T10:00:00Z',"
+                "'2025-01-01T10:00:00Z')"),
             QStringLiteral("INSERT INTO rounds VALUES('legacy-round','legacy-course',"
                            "'Legacy Golf Club','v1','legacy-profile',18,'stroke',14,"
                            "'completed',18,'2025-01-01T10:00:00Z',"
@@ -129,6 +158,12 @@ bool createLegacyV2Database(const QString &path) {
                     "CREATE TABLE rounds(id TEXT PRIMARY KEY,profile_id TEXT,"
                     "status TEXT,course_slug TEXT,started_at TEXT,"
                     "hole_count INTEGER)")) &&
+                query.exec(QStringLiteral(
+                    "CREATE TABLE clubs(id TEXT PRIMARY KEY,profile_id TEXT,"
+                    "name TEXT NOT NULL,carry_metres REAL NOT NULL,"
+                    "enabled INTEGER NOT NULL DEFAULT 1,"
+                    "position INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,"
+                    "updated_at TEXT NOT NULL)")) &&
                 query.exec(
                     QStringLiteral("CREATE TABLE participants(id TEXT PRIMARY KEY,"
                                    "round_id TEXT)")) &&
@@ -189,9 +224,40 @@ int main(int argc, char **argv) {
         std::cerr << database.lastError().toStdString() << '\n';
         return EXIT_FAILURE;
     }
-    if (database.schemaVersion() != 6) {
+    if (database.schemaVersion() != 7) {
         std::cerr << "Migration version mismatch\n";
         return EXIT_FAILURE;
+    }
+
+    {
+        const QString starterPath =
+            directory.filePath(QStringLiteral("starter.sqlite"));
+        opencaddie::storage::Database starterDatabase;
+        if (!starterDatabase.open(starterPath))
+            return EXIT_FAILURE;
+        opencaddie::storage::ClubRepository starterClubs(
+            starterDatabase.connection());
+        if (!starterClubs.ensureDefaultProfile() ||
+            !starterClubs.ensureStarterBag()) {
+            return EXIT_FAILURE;
+        }
+        const auto values =
+            starterClubs.list(starterClubs.defaultProfileId());
+        using opencaddie::domain::ClubType;
+        if (values.size() != 6 || values.at(0).type != ClubType::Driver ||
+            values.at(1).type != ClubType::Iron ||
+            values.at(3).type != ClubType::Wedge ||
+            values.at(5).type != ClubType::Putter) {
+            std::cerr << "Starter bag club types were not persisted\n";
+            return EXIT_FAILURE;
+        }
+        QSqlQuery emptyStarter(starterDatabase.connection());
+        if (!emptyStarter.exec(QStringLiteral("DELETE FROM clubs")) ||
+            !starterClubs.ensureStarterBag() ||
+            !starterClubs.list(starterClubs.defaultProfileId()).empty()) {
+            std::cerr << "An intentionally empty bag was repopulated\n";
+            return EXIT_FAILURE;
+        }
     }
 
     {
@@ -211,8 +277,23 @@ int main(int argc, char **argv) {
         if (!clubs.ensureDefaultProfile())
             return EXIT_FAILURE;
         profile = clubs.defaultProfileId();
-        const auto clubId = clubs.create(profile, QStringLiteral("7 iron"), 145.0);
-        if (clubId.isEmpty() || clubs.list(profile).size() != 1) {
+        using opencaddie::domain::ClubType;
+        const auto clubId = clubs.create(profile, QStringLiteral("7 iron"), 145.0,
+                                         ClubType::Iron, false);
+        auto storedClubs = clubs.list(profile);
+        if (clubId.isEmpty() || storedClubs.size() != 1 ||
+            storedClubs.front().type != ClubType::Iron ||
+            storedClubs.front().enabled) {
+            return EXIT_FAILURE;
+        }
+        storedClubs.front().type = ClubType::Hybrid;
+        storedClubs.front().enabled = true;
+        if (!clubs.update(storedClubs.front())) {
+            return EXIT_FAILURE;
+        }
+        storedClubs = clubs.list(profile);
+        if (storedClubs.front().type != ClubType::Hybrid ||
+            !storedClubs.front().enabled) {
             return EXIT_FAILURE;
         }
 
@@ -392,6 +473,177 @@ int main(int argc, char **argv) {
             std::cerr << "Out-of-range shot coordinate was accepted\n";
             return EXIT_FAILURE;
         }
+
+        const auto scoreForHole = [&rounds, &round](const int hole)
+            -> std::optional<opencaddie::domain::HoleScore> {
+            for (const auto &score : rounds.scores(*round)) {
+                if (score.hole == hole)
+                    return score;
+            }
+            return std::nullopt;
+        };
+        opencaddie::storage::ShotRecord tracked;
+        tracked.roundId = round->id;
+        tracked.participantId = round->participantId;
+        tracked.hole = 4;
+        tracked.sequence = 2;
+        tracked.clubId = clubId;
+        tracked.clubName = QStringLiteral("7 iron");
+        tracked.shotType = QStringLiteral("drive");
+        if (shots.appendTrackedStroke(tracked, *round, {4, 5, 9}) ||
+            !shots.list(round->id, round->participantId, 4).empty() ||
+            scoreForHole(4)->strokes != 3) {
+            std::cerr << "Tracked stroke sequence validation was not atomic\n";
+            return EXIT_FAILURE;
+        }
+
+        tracked.sequence = 1;
+        tracked.startLatitude = 59.0;
+        tracked.startLongitude = 10.0;
+        tracked.endLatitude = 59.001;
+        tracked.endLongitude = 10.002;
+        tracked.distanceMetres = 157.5;
+        tracked.accuracyMetres = 6.0;
+        if (!shots.appendTrackedStroke(tracked, *round, {4, 5, 9})) {
+            std::cerr << "Tracked GPS stroke append failed\n";
+            return EXIT_FAILURE;
+        }
+        auto trackedShots = shots.list(round->id, round->participantId, 4);
+        auto trackedScore = scoreForHole(4);
+        if (trackedShots.size() != 1 || !trackedShots.front().startLatitude ||
+            !trackedShots.front().endLongitude ||
+            trackedShots.front().clubId != clubId ||
+            trackedShots.front().clubName != QStringLiteral("7 iron") ||
+            trackedShots.front().distanceMetres != 157.5 || !trackedScore ||
+            trackedScore->strokes != 4 || trackedScore->putts != 1 ||
+            trackedScore->fairway != FairwayResult::Centre ||
+            trackedScore->greenInRegulation != true) {
+            std::cerr << "Tracked GPS coordinates or score were not persisted\n";
+            return EXIT_FAILURE;
+        }
+
+        opencaddie::storage::ShotRecord noGps;
+        noGps.roundId = round->id;
+        noGps.participantId = round->participantId;
+        noGps.hole = 4;
+        noGps.sequence = 2;
+        noGps.shotType = QStringLiteral("unknown");
+        if (!shots.appendTrackedStroke(noGps, *round, {4, 5, 9})) {
+            std::cerr << "Locationless tracked stroke append failed\n";
+            return EXIT_FAILURE;
+        }
+        trackedShots = shots.list(round->id, round->participantId, 4);
+        trackedScore = scoreForHole(4);
+        if (trackedShots.size() != 2 || trackedShots.back().startLatitude ||
+            trackedShots.back().endLatitude || trackedShots.back().distanceMetres ||
+            !trackedScore || trackedScore->strokes != 5 ||
+            trackedScore->putts != 1) {
+            std::cerr << "No-GPS stroke invented geometry or missed the score\n";
+            return EXIT_FAILURE;
+        }
+        if (!shots.updateLastTrackedStrokeType(*round, {4, 5, 9},
+                                               QStringLiteral("putt")) ||
+            scoreForHole(4)->putts != 2 ||
+            shots.list(round->id, round->participantId, 4).back().shotType !=
+                QStringLiteral("putt") ||
+            !shots.updateLastTrackedStrokeType(*round, {4, 5, 9},
+                                               QStringLiteral("chip")) ||
+            scoreForHole(4)->putts != 1 ||
+            !shots.removeLastTrackedStroke(*round, {4, 5, 9}) ||
+            shots.list(round->id, round->participantId, 4).size() != 1 ||
+            scoreForHole(4)->strokes != 4) {
+            std::cerr << "Tracked type correction or undo did not synchronize score\n";
+            return EXIT_FAILURE;
+        }
+
+        const opencaddie::domain::HoleScore manualCorrection{
+            .hole = 4,
+            .strokes = 7,
+            .putts = 1,
+            .penalties = 2,
+            .fairway = FairwayResult::Right,
+            .greenInRegulation = false,
+            .tee = "Red",
+            .notes = "manual correction",
+        };
+        noGps.sequence = 2;
+        noGps.shotType = QStringLiteral("chip");
+        if (!rounds.saveScore(*round, {4, 5, 9}, manualCorrection) ||
+            !shots.appendTrackedStroke(noGps, *round, {4, 5, 9})) {
+            std::cerr << "Append after a manual score correction failed\n";
+            return EXIT_FAILURE;
+        }
+        trackedScore = scoreForHole(4);
+        if (!trackedScore || trackedScore->strokes != 8 ||
+            trackedScore->putts != 1 || trackedScore->penalties != 2 ||
+            trackedScore->fairway != FairwayResult::Right ||
+            trackedScore->greenInRegulation != false ||
+            trackedScore->tee != "Red" ||
+            trackedScore->notes != "manual correction" ||
+            !shots.removeLastTrackedStroke(*round, {4, 5, 9}) ||
+            scoreForHole(4)->strokes != 7 ||
+            !shots.removeLastTrackedStroke(*round, {4, 5, 9}) ||
+            scoreForHole(4)->strokes != 6) {
+            std::cerr << "Tracking overwrote manual score fields\n";
+            return EXIT_FAILURE;
+        }
+
+        const opencaddie::domain::HoleScore originalFourth{
+            .hole = 4,
+            .strokes = 3,
+            .putts = 1,
+            .fairway = FairwayResult::Centre,
+            .greenInRegulation = true,
+        };
+        if (!rounds.saveScore(*round, {4, 5, 9}, originalFourth))
+            return EXIT_FAILURE;
+        QSqlQuery rollbackTrigger(database.connection());
+        if (!rollbackTrigger.exec(QStringLiteral(
+                "CREATE TEMP TRIGGER reject_tracked_score BEFORE UPDATE ON "
+                "hole_scores WHEN NEW.hole=4 BEGIN SELECT RAISE(ABORT,'forced "
+                "score failure'); END"))) {
+            std::cerr << "Could not create transaction rollback fixture\n";
+            return EXIT_FAILURE;
+        }
+        noGps.sequence = 1;
+        noGps.shotType = QStringLiteral("unknown");
+        if (shots.appendTrackedStroke(noGps, *round, {4, 5, 9}) ||
+            !shots.list(round->id, round->participantId, 4).empty() ||
+            scoreForHole(4)->strokes != 3 ||
+            !rollbackTrigger.exec(
+                QStringLiteral("DROP TRIGGER reject_tracked_score"))) {
+            std::cerr << "Failed score update did not roll back tracked stroke\n";
+            return EXIT_FAILURE;
+        }
+
+        auto teeShot = drive;
+        teeShot.hole = 2;
+        teeShot.sequence = 1;
+        teeShot.shotType = QStringLiteral("tee");
+        teeShot.distanceMetres = 200.0;
+        teeShot.externalId = QStringLiteral("fixture-tee-2");
+        teeShot.metrics.clear();
+        teeShot.replaceMetrics = false;
+        auto externalUnknown = teeShot;
+        externalUnknown.hole = 3;
+        externalUnknown.shotType = QStringLiteral("bunker_escape");
+        externalUnknown.distanceMetres.reset();
+        externalUnknown.externalId = QStringLiteral("fixture-unknown-3");
+        QSqlQuery guestParticipant(database.connection());
+        guestParticipant.prepare(QStringLiteral(
+            "INSERT INTO participants(id,round_id,profile_id,display_name,handicap,"
+            "position) VALUES('guest-participant',?,NULL,'Guest',0,1)"));
+        guestParticipant.addBindValue(round->id);
+        auto guestShot = externalUnknown;
+        guestShot.participantId = QStringLiteral("guest-participant");
+        guestShot.hole = 1;
+        guestShot.shotType = QStringLiteral("chip");
+        guestShot.externalId = QStringLiteral("guest-shot-ignored");
+        if (!shots.upsert(teeShot) || !shots.upsert(externalUnknown) ||
+            !guestParticipant.exec() || !shots.upsert(guestShot)) {
+            std::cerr << "External shot aggregation fixtures failed\n";
+            return EXIT_FAILURE;
+        }
         QSqlQuery triggerCheck(database.connection());
         if (triggerCheck.exec(
                 QStringLiteral("UPDATE shots SET participant_id='other-participant' "
@@ -410,6 +662,28 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
         scoreTriggerCheck.finish();
+
+        noGps.sequence = 1;
+        noGps.shotType = QStringLiteral("unknown");
+        if (!shots.appendTrackedStroke(noGps, *round, {4, 5, 9})) {
+            std::cerr << "Could not create resumable tracked stroke\n";
+            return EXIT_FAILURE;
+        }
+
+        opencaddie::storage::ShotRecord firstAndOnly;
+        firstAndOnly.roundId = round->id;
+        firstAndOnly.participantId = round->participantId;
+        firstAndOnly.hole = 5;
+        firstAndOnly.sequence = 1;
+        firstAndOnly.shotType = QStringLiteral("putt");
+        if (!shots.appendTrackedStroke(firstAndOnly, *round, {5, 4, 11}) ||
+            !scoreForHole(5) || scoreForHole(5)->strokes != 1 ||
+            scoreForHole(5)->putts != 1 ||
+            !shots.removeLastTrackedStroke(*round, {5, 4, 11}) ||
+            scoreForHole(5)) {
+            std::cerr << "Undo did not clean up an automatically created score\n";
+            return EXIT_FAILURE;
+        }
     }
 
     // Re-open before completion to exercise WAL recovery and score durability.
@@ -436,6 +710,17 @@ int main(int argc, char **argv) {
             std::cerr << "Round weather did not survive reopen\n";
             return EXIT_FAILURE;
         }
+        opencaddie::storage::ShotRepository resumedShots(database.connection());
+        const auto restoredTracked = resumedShots.list(
+            resumed->id, resumed->participantId, 4);
+        if (restoredTracked.size() != 1 ||
+            restoredTracked.front().shotType != QStringLiteral("unknown") ||
+            restoredTracked.front().endLatitude ||
+            !resumedShots.removeLastTrackedStroke(*resumed, {4, 5, 9}) ||
+            reopened.scores(*resumed).back().strokes != 3) {
+            std::cerr << "Tracked stroke did not resume or undo after reopen\n";
+            return EXIT_FAILURE;
+        }
         if (!reopened.finish(resumed->id))
             return EXIT_FAILURE;
 
@@ -452,13 +737,22 @@ int main(int argc, char **argv) {
                               QStringLiteral("left")) != 1 ||
             !overview.value(QStringLiteral("longestDriveRecorded")).toBool() ||
             overview.value(QStringLiteral("longestDriveMetres")).toDouble() != 242.5 ||
+            overview.value(QStringLiteral("trackedStrokes")).toInt() != 3 ||
+            overview.value(QStringLiteral("scoredStrokes")).toInt() != 16 ||
+            distributionCount(overview, QStringLiteral("shotTypeDistribution"),
+                              QStringLiteral("drive")) != 2 ||
+            distributionCount(overview, QStringLiteral("shotTypeDistribution"),
+                              QStringLiteral("unknown")) != 1 ||
             overview.value(QStringLiteral("weatherRounds")).toInt() != 1) {
             std::cerr << "Statistics aggregation mismatch\n";
             return EXIT_FAILURE;
         }
         if (statistics.overview(QStringLiteral("missing"), profile)
                 .value(QStringLiteral("rounds"))
-                .toInt() != 0) {
+                .toInt() != 0 ||
+            statistics.overview(QStringLiteral("missing"), profile)
+                    .value(QStringLiteral("trackedStrokes"))
+                    .toInt() != 0) {
             std::cerr << "Course statistics filter mismatch\n";
             return EXIT_FAILURE;
         }
@@ -477,6 +771,8 @@ int main(int argc, char **argv) {
         }
 
         const auto detail = reopened.detail(resumed->id, profile);
+        const auto detailSummary =
+            detail.value(QStringLiteral("summary")).toMap();
         if (detail.value(QStringLiteral("scores")).toList().size() != 4 ||
             detail.value(QStringLiteral("summary"))
                     .toMap()
@@ -502,6 +798,14 @@ int main(int argc, char **argv) {
                     .toMap()
                     .value(QStringLiteral("longestDriveMetres"))
                     .toDouble() != 242.5 ||
+            detailSummary.value(QStringLiteral("trackedStrokes")).toInt() != 3 ||
+            detailSummary.value(QStringLiteral("scoredStrokes")).toInt() != 16 ||
+            distributionCount(detailSummary,
+                              QStringLiteral("shotTypeDistribution"),
+                              QStringLiteral("drive")) != 2 ||
+            distributionCount(detailSummary,
+                              QStringLiteral("shotTypeDistribution"),
+                              QStringLiteral("unknown")) != 1 ||
             reopened.history({}, profile)
                     .front()
                     .toMap()
@@ -594,7 +898,7 @@ int main(int argc, char **argv) {
     if (!createLegacyV1Database(legacyPath))
         return EXIT_FAILURE;
     opencaddie::storage::Database migrated;
-    if (!migrated.open(legacyPath) || migrated.schemaVersion() != 6) {
+    if (!migrated.open(legacyPath) || migrated.schemaVersion() != 7) {
         std::cerr << "Legacy migration failed: " << migrated.lastError().toStdString()
                   << '\n';
         return EXIT_FAILURE;
@@ -611,6 +915,30 @@ int main(int argc, char **argv) {
         preserved.value(2).toInt() != 5 || !preserved.value(3).toString().isEmpty() ||
         preserved.value(4).toInt() != 18) {
         std::cerr << "Legacy data was not preserved\n";
+        return EXIT_FAILURE;
+    }
+    preserved.finish();
+    if (!preserved.exec(QStringLiteral(
+            "SELECT name,club_type FROM clubs ORDER BY position"))) {
+        std::cerr << "Migrated club types could not be read\n";
+        return EXIT_FAILURE;
+    }
+    QStringList migratedClubTypes;
+    while (preserved.next()) {
+        migratedClubTypes.push_back(preserved.value(0).toString() + "=" +
+                                    preserved.value(1).toString());
+    }
+    const QStringList expectedClubTypes{
+        QStringLiteral("Driver=driver"),
+        QStringLiteral("5 wood=wood"),
+        QStringLiteral("4 hybrid=hybrid"),
+        QStringLiteral("7 iron=iron"),
+        QStringLiteral("Sand wedge=wedge"),
+        QStringLiteral("Putter=putter"),
+        QStringLiteral("Old faithful=other"),
+    };
+    if (migratedClubTypes != expectedClubTypes) {
+        std::cerr << "Legacy club types were not backfilled\n";
         return EXIT_FAILURE;
     }
     preserved.finish();
@@ -634,8 +962,9 @@ int main(int argc, char **argv) {
     if (!createLegacyV2Database(legacyV2Path))
         return EXIT_FAILURE;
     opencaddie::storage::Database migratedV2;
-    if (!migratedV2.open(legacyV2Path) || migratedV2.schemaVersion() != 6) {
-        std::cerr << "Version 2 migration failed\n";
+    if (!migratedV2.open(legacyV2Path) || migratedV2.schemaVersion() != 7) {
+        std::cerr << "Version 2 migration failed: "
+                  << migratedV2.lastError().toStdString() << '\n';
         return EXIT_FAILURE;
     }
     QSqlQuery v2Preserved(migratedV2.connection());

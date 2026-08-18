@@ -71,6 +71,15 @@ Item {
         return "—"
     }
 
+    function shotCount(key) {
+        var values = root.summary.shotTypeDistribution || []
+        for (var index = 0; index < values.length; ++index) {
+            if (values[index].key === key)
+                return Number(values[index].count || 0)
+        }
+        return 0
+    }
+
     TopBar {
         id: header
         anchors.left: parent.left
@@ -241,6 +250,40 @@ Item {
                     color: Theme.textMuted
                     font.family: "Inter"
                     font.pixelSize: Theme.px(10)
+                }
+                Column {
+                    width: parent.width
+                    spacing: 1
+                    Text {
+                        width: parent.width
+                        text: qsTr("%1 tracked · %2 scored")
+                              .arg(root.summary.trackedStrokes || 0)
+                              .arg(root.summary.scoredStrokes || 0)
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(10)
+                    }
+                    Text {
+                        width: parent.width
+                        text: qsTr("Drive %1 · Approach %2 · Chip %3")
+                              .arg(root.shotCount("drive"))
+                              .arg(root.shotCount("approach"))
+                              .arg(root.shotCount("chip"))
+                        color: Theme.textMuted
+                        font.family: "Inter"
+                        font.pixelSize: Theme.px(9)
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        width: parent.width
+                        text: qsTr("Putt %1 · Unknown %2")
+                              .arg(root.shotCount("putt"))
+                              .arg(root.shotCount("unknown"))
+                        color: Theme.textMuted
+                        font.family: "Inter"
+                        font.pixelSize: Theme.px(9)
+                    }
                 }
             }
         }

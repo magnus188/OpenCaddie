@@ -21,16 +21,12 @@ PageScaffold {
                                       : "rgba(47,203,99,0.05)"
         }
 
-        CourseMap {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenterOffset: 18
-            width: 220
-            height: parent.height - 10
-            modelSource: "qrc:/qt/qml/OpenCaddie/assets/demo/home-render-model.json"
-            hole: 1
-            colors: app.mapColors
-            playerVisible: false
+        Image {
+            anchors.fill: parent
+            source: "../../assets/illustrations/home-course-cubist.png"
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
         }
     }
 

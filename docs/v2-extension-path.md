@@ -9,12 +9,14 @@ UUID event IDs, monotonically ordered actor sequence numbers, acknowledgements,
 periodic snapshots, and reconnect replay. Score mutations are idempotent; no
 device merges raw SQLite files.
 
-## Shot logging
+## Extended shot logging
 
-One tap selects/confirms a club and marks a GPS point. The next marker completes
-the previous shot. Events retain accuracy and original coordinates and support
-undo/edit. Derived distance, lateral direction, fairway result, and per-club
-left/centre/right percentages are projections that can be rebuilt.
+V1 already provides optional landing-point tracking with an image-based club
+picker, latest-shot undo/type correction, editable score synchronization, and
+local route display. V2 may add editing older strokes, historical-round map
+playback, lateral/fairway projections, and per-club dispersion. Those additions
+should remain rebuildable projections over the existing canonical shot events
+rather than changing the optional V1 workflow.
 
 ## Self-hosted sync
 

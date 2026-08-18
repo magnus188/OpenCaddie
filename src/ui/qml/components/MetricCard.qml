@@ -7,6 +7,13 @@ Rectangle {
     property string value
     property color accent: Theme.text
     property bool prominent: false
+    property bool ready: false
+
+    onValueChanged: {
+        if (ready)
+            valuePulse.restart()
+    }
+    Component.onCompleted: ready = true
 
     radius: 0
     color: "transparent"
@@ -31,6 +38,7 @@ Rectangle {
             elide: Text.ElideRight
         }
         Text {
+            id: valueLabel
             width: parent.width
             height: parent.height - 18
             text: card.value
@@ -43,6 +51,27 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
+        }
+    }
+
+    SequentialAnimation {
+        id: valuePulse
+        NumberAnimation {
+            target: valueLabel
+            property: "scale"
+            from: 1
+            to: 1.045
+            duration: Theme.motionPress
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: valueLabel
+            property: "scale"
+            from: 1.045
+            to: 1
+            duration: Theme.motion
+            easing.type: Easing.OutBack
+            easing.overshoot: 0.45
         }
     }
 }

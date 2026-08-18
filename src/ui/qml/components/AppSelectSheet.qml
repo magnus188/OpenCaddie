@@ -10,6 +10,8 @@ Item {
     property int currentIndex: 0
     readonly property var currentValue: valueAt(currentIndex)
     readonly property string displayText: textAt(currentIndex)
+    property string buttonText: displayText + "  ⌄"
+    property string accessibleName: displayText
     signal activated()
 
     implicitWidth: 250
@@ -31,7 +33,8 @@ Item {
 
     AppButton {
         anchors.fill: parent
-        text: control.displayText + "  ⌄"
+        text: control.buttonText
+        accessibleName: control.accessibleName
         variant: "surface"
         compact: true
         onClicked: sheet.open()
@@ -49,6 +52,44 @@ Item {
         focus: true
         padding: 16
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        enter: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: Theme.motionSheet
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    property: "y"
+                    from: sheet.parent ? sheet.parent.height : 480
+                    to: sheet.parent ? sheet.parent.height - sheet.height : 0
+                    duration: Theme.motionSlow
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+        exit: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "opacity"
+                    from: 1
+                    to: 0
+                    duration: Theme.motionFast
+                    easing.type: Easing.InCubic
+                }
+                NumberAnimation {
+                    property: "y"
+                    from: sheet.parent ? sheet.parent.height - sheet.height : 0
+                    to: sheet.parent ? sheet.parent.height : 480
+                    duration: Theme.motionSheet
+                    easing.type: Easing.InCubic
+                }
+            }
+        }
 
         background: Rectangle {
             color: Theme.surface
@@ -73,6 +114,10 @@ Item {
                 color: index === control.currentIndex
                        ? Qt.rgba(0.18, 0.80, 0.39, 0.14)
                        : optionTap.pressed ? Theme.controlPressed : "transparent"
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionFast }
+                }
 
                 Text {
                     anchors.left: parent.left

@@ -52,8 +52,12 @@ qt_add_qml_module(opencaddie
         qml/components/AppTextField.qml
         qml/components/BottomNav.qml
         qml/components/BrandLockup.qml
+        qml/components/ClubArtwork.qml
+        qml/components/ClubPickerSheet.qml
+        qml/components/ClubDetailsSheet.qml
         qml/components/ConfirmDialog.qml
         qml/components/HoleHeader.qml
+        qml/components/FlyingBird.qml
         qml/components/IconButton.qml
         qml/components/MetricCard.qml
         qml/components/OnScreenKeyboard.qml
@@ -89,6 +93,22 @@ qt_add_qml_module(opencaddie
         qml/screens/WifiScreen.qml
     RESOURCES
         assets/brand/mark.svg
+        assets/club-heads/bag-rack.png
+        assets/club-heads/driver.png
+        assets/club-heads/hybrid.png
+        assets/club-heads/iron.png
+        assets/club-heads/other.png
+        assets/club-heads/putter.png
+        assets/club-heads/wedge.png
+        assets/club-heads/wood.png
+        assets/clubs/bag.png
+        assets/clubs/driver.png
+        assets/clubs/hybrid.png
+        assets/clubs/iron.png
+        assets/clubs/other.png
+        assets/clubs/putter.png
+        assets/clubs/wedge.png
+        assets/clubs/wood.png
         assets/demo/manifest.json
         assets/demo/navigation.json
         assets/demo/home-render-model.json
@@ -99,6 +119,7 @@ qt_add_qml_module(opencaddie
         assets/fonts/Inter-Regular.ttf
         assets/fonts/Inter-SemiBold.ttf
         assets/fonts/OFL.txt
+        assets/illustrations/home-course-cubist.png
         assets/icons/close.svg
         assets/icons/compass.svg
         assets/icons/dogleg.svg
@@ -109,6 +130,12 @@ qt_add_qml_module(opencaddie
         assets/icons/figma/weather-direction.svg
         assets/icons/figma/weather-rain.svg
         assets/icons/figma/weather-wind.svg
+        assets/wildlife/bird-body.svg
+        assets/wildlife/bird-wing-lower.svg
+        assets/wildlife/bird-wing-upper.svg
+        assets/wildlife/eagle-body.svg
+        assets/wildlife/eagle-wing-lower.svg
+        assets/wildlife/eagle-wing-upper.svg
         assets/icons/lucide/LICENSE.txt
         assets/icons/lucide/battery-charging.svg
         assets/icons/lucide/battery-charging-dark.svg

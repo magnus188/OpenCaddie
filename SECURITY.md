@@ -18,7 +18,8 @@ not include real Wi-Fi credentials, access tokens, or personal location data.
 - Course ZIPs are size-bounded, path-checked, hash-verified, and installed
   atomically.
 - Round data is local by default and excluded from logs.
+- Optional stroke GPS coordinates stay in the local round database unless the
+  user explicitly exports data or a future authorized sync feature is enabled.
 - Remote course endpoints require HTTPS, except loopback development.
 - Future sync, BLE, and OTA features must use scoped credentials, authenticated
   encryption, signed artifacts, and rollback-safe state transitions.
-

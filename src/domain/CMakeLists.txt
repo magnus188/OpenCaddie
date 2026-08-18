@@ -6,6 +6,7 @@ add_library(opencaddie_domain STATIC
     PlaysLike.cpp
     Scoring.cpp
     Settings.cpp
+    ShotTracking.cpp
     Statistics.cpp
 )
 

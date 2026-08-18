@@ -9,7 +9,7 @@
         <translation>Reduser</translation>
     </message>
     <message>
-        <location filename="../qml/components/AppSlider.qml" line="81"/>
+        <location filename="../qml/components/AppSlider.qml" line="93"/>
         <source>Increase</source>
         <translation>Øk</translation>
     </message>
@@ -17,89 +17,188 @@
 <context>
     <name>BagScreen</name>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="41"/>
+        <location filename="../qml/screens/BagScreen.qml" line="182"/>
         <source>My bag</source>
         <translation>Min bag</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="56"/>
-        <source>Enabled clubs</source>
-        <translation>Aktive køller</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="128"/>
-        <source>Move up</source>
-        <translation>Flytt opp</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="134"/>
-        <source>Move down</source>
-        <translation>Flytt ned</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="146"/>
-        <source>Edit club</source>
-        <translation>Rediger kølle</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="146"/>
+        <location filename="../qml/screens/BagScreen.qml" line="185"/>
+        <location filename="../qml/screens/BagScreen.qml" line="738"/>
         <source>Add club</source>
         <translation>Legg til kølle</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="152"/>
-        <source>Club name</source>
-        <translation>Køllenavn</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="160"/>
-        <source>Example: 7 iron</source>
-        <translation>Eksempel: 7-jern</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="163"/>
-        <source>Carry (metres)</source>
-        <translation>Slaglengde (meter)</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="163"/>
-        <source>Carry (yards)</source>
-        <translation>Slaglengde (yards)</translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="179"/>
-        <location filename="../qml/screens/BagScreen.qml" line="186"/>
+        <location filename="../qml/screens/BagScreen.qml" line="542"/>
+        <location filename="../qml/screens/BagScreen.qml" line="551"/>
         <source>Use for recommendations</source>
         <translation>Bruk i anbefalinger</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="193"/>
-        <source>Save</source>
-        <translation>Lagre</translation>
+        <location filename="../qml/screens/BagScreen.qml" line="35"/>
+        <source>Driver</source>
+        <translation>Driver</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="193"/>
-        <source>Add</source>
-        <translation>Legg til</translation>
+        <location filename="../qml/screens/BagScreen.qml" line="36"/>
+        <source>Fairway wood</source>
+        <translation>Fairwaywood</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="211"/>
-        <source>New</source>
-        <translation>Ny</translation>
+        <location filename="../qml/screens/BagScreen.qml" line="37"/>
+        <source>Hybrid</source>
+        <translation>Hybrid</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="221"/>
-        <location filename="../qml/screens/BagScreen.qml" line="236"/>
+        <location filename="../qml/screens/BagScreen.qml" line="38"/>
+        <source>Iron</source>
+        <translation>Jern</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="39"/>
+        <source>Wedge</source>
+        <translation>Wedge</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="40"/>
+        <source>Putter</source>
+        <translation>Putter</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="41"/>
+        <source>Other</source>
+        <translation>Annet</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="317"/>
+        <source>Off</source>
+        <translation>Av</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="361"/>
+        <source>Your club rack is empty</source>
+        <translation>Køllestativet er tomt</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="370"/>
+        <source>Add a club to start building your bag.</source>
+        <translation>Legg til en kølle for å bygge bagen.</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="429"/>
+        <location filename="../qml/screens/BagScreen.qml" line="512"/>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="429"/>
+        <location filename="../qml/screens/BagScreen.qml" line="512"/>
+        <source>yd</source>
+        <translation>yd</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="467"/>
+        <source>Recommended</source>
+        <translation>Anbefalt</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="468"/>
+        <source>Not recommended</source>
+        <translation>Ikke anbefalt</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="502"/>
+        <source>Carry distance</source>
+        <translation>Slaglengde</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="562"/>
+        <source>Fine tune in 1-unit steps</source>
+        <translation>Finjuster i trinn på 1</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="583"/>
+        <location filename="../qml/screens/BagScreen.qml" line="678"/>
+        <source>Reorder bag</source>
+        <translation>Endre rekkefølge</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="594"/>
+        <source>Move the selected club along the rack.</source>
+        <translation>Flytt den valgte køllen i stativet.</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="608"/>
+        <source>Move left</source>
+        <translation>Flytt mot venstre</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="617"/>
+        <source>Move right</source>
+        <translation>Flytt mot høyre</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="639"/>
+        <source>Save changes</source>
+        <translation>Lagre endringer</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="652"/>
+        <source>Details</source>
+        <translation>Detaljer</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="654"/>
+        <source>Edit details</source>
+        <translation>Rediger detaljer</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="667"/>
+        <location filename="../qml/screens/BagScreen.qml" line="767"/>
         <source>Remove</source>
         <translation>Fjern</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="233"/>
+        <location filename="../qml/screens/BagScreen.qml" line="669"/>
+        <source>Remove club</source>
+        <translation>Fjern kølle</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="700"/>
+        <source>Done reordering</source>
+        <translation>Ferdig med rekkefølge</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="711"/>
+        <source>Position %1 of %2</source>
+        <translation>Plass %1 av %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="729"/>
+        <source>Ready for your first club?</source>
+        <translation>Klar for din første kølle?</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="749"/>
+        <source>Discard changes?</source>
+        <translation>Forkaste endringer?</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="750"/>
+        <source>Your unsaved carry and recommendation changes will be lost.</source>
+        <translation>Ulagrede endringer i slaglengde og anbefaling går tapt.</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="751"/>
+        <source>Discard</source>
+        <translation>Forkast</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="764"/>
         <source>Remove club?</source>
         <translation>Fjerne køllen?</translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="234"/>
+        <location filename="../qml/screens/BagScreen.qml" line="765"/>
         <source>The club will no longer be available for recommendations.</source>
         <translation>Køllen blir ikke lenger brukt i anbefalinger.</translation>
     </message>
@@ -112,25 +211,192 @@
         <translation>Forrige hull</translation>
     </message>
     <message>
-        <location filename="../qml/components/BottomNav.qml" line="44"/>
+        <location filename="../qml/components/BottomNav.qml" line="45"/>
         <source>Page %1</source>
         <translation>Side %1</translation>
     </message>
     <message>
-        <location filename="../qml/components/BottomNav.qml" line="75"/>
+        <location filename="../qml/components/BottomNav.qml" line="92"/>
         <source>Finish round</source>
         <translation>Fullfør runde</translation>
     </message>
     <message>
-        <location filename="../qml/components/BottomNav.qml" line="75"/>
+        <location filename="../qml/components/BottomNav.qml" line="92"/>
         <source>Next hole</source>
         <translation>Neste hull</translation>
     </message>
 </context>
 <context>
+    <name>ClubDetailsSheet</name>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="15"/>
+        <source>Driver</source>
+        <translation>Driver</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="16"/>
+        <source>Fairway wood</source>
+        <translation>Fairwaywood</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="17"/>
+        <source>Hybrid</source>
+        <translation>Hybrid</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="18"/>
+        <source>Iron</source>
+        <translation>Jern</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="19"/>
+        <source>Wedge</source>
+        <translation>Wedge</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="20"/>
+        <source>Putter</source>
+        <translation>Putter</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="21"/>
+        <source>Other</source>
+        <translation>Annet</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="164"/>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="290"/>
+        <source>Add club</source>
+        <translation>Legg til kølle</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="164"/>
+        <source>Club details</source>
+        <translation>Kølledetaljer</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="177"/>
+        <source>Close club details</source>
+        <translation>Lukk kølledetaljer</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="195"/>
+        <source>Club type</source>
+        <translation>Kølletype</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="211"/>
+        <source>Club name</source>
+        <translation>Køllenavn</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="219"/>
+        <source>Example: 7 iron</source>
+        <translation>Eksempel: 7-jern</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="238"/>
+        <source>Carry (metres)</source>
+        <translation>Slaglengde (meter)</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="239"/>
+        <source>Carry (yards)</source>
+        <translation>Slaglengde (yards)</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="262"/>
+        <source>Recommendations</source>
+        <translation>Anbefalinger</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="273"/>
+        <source>Use for recommendations</source>
+        <translation>Bruk i anbefalinger</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="283"/>
+        <source>Cancel</source>
+        <translation>Avbryt</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="290"/>
+        <source>Save club</source>
+        <translation>Lagre kølle</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="303"/>
+        <source>Discard club details?</source>
+        <translation>Forkaste kølledetaljer?</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="304"/>
+        <source>Your unsaved club details will be lost.</source>
+        <translation>Ulagrede kølledetaljer går tapt.</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubDetailsSheet.qml" line="305"/>
+        <source>Discard</source>
+        <translation>Forkast</translation>
+    </message>
+</context>
+<context>
+    <name>ClubPickerSheet</name>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="80"/>
+        <source>Which club?</source>
+        <translation>Hvilken kølle?</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="88"/>
+        <source>Choose a club · GPS will be saved</source>
+        <translation>Velg en kølle · GPS lagres</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="89"/>
+        <source>Choose a club · No GPS, records anyway</source>
+        <translation>Velg en kølle · Ingen GPS, registreres likevel</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="102"/>
+        <source>Close club picker</source>
+        <translation>Lukk køllevelger</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="134"/>
+        <source>Record with %1</source>
+        <translation>Registrer med %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="175"/>
+        <source>Off</source>
+        <translation>Av</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="202"/>
+        <source>No clubs in your bag yet</source>
+        <translation>Ingen køller i bagen ennå</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="222"/>
+        <source>Record without club</source>
+        <translation>Registrer uten kølle</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="225"/>
+        <source>Record stroke without choosing a club</source>
+        <translation>Registrer slag uten å velge kølle</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubPickerSheet.qml" line="236"/>
+        <source>Club choice is optional and can be skipped.</source>
+        <translation>Køllevalg er valgfritt og kan hoppes over.</translation>
+    </message>
+</context>
+<context>
     <name>ConfirmDialog</name>
     <message>
-        <location filename="../qml/components/ConfirmDialog.qml" line="51"/>
+        <location filename="../qml/components/ConfirmDialog.qml" line="90"/>
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
@@ -388,17 +654,17 @@
 <context>
     <name>HoleHeader</name>
     <message>
-        <location filename="../qml/components/HoleHeader.qml" line="29"/>
+        <location filename="../qml/components/HoleHeader.qml" line="36"/>
         <source>Hole</source>
         <translation>Hull</translation>
     </message>
     <message>
-        <location filename="../qml/components/HoleHeader.qml" line="59"/>
+        <location filename="../qml/components/HoleHeader.qml" line="67"/>
         <source>Par</source>
         <translation>Par</translation>
     </message>
     <message>
-        <location filename="../qml/components/HoleHeader.qml" line="66"/>
+        <location filename="../qml/components/HoleHeader.qml" line="74"/>
         <source>Index</source>
         <translation>Indeks</translation>
     </message>
@@ -505,89 +771,194 @@
 <context>
     <name>LiveHoleScreen</name>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="446"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="609"/>
         <source>Scorecard</source>
         <translation>Scorekort</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="29"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="57"/>
         <source>Round menu</source>
         <translation>Rundemeny</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="417"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="580"/>
         <source>Close menu</source>
         <translation>Lukk meny</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="428"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="591"/>
         <source>Enter score</source>
         <translation>Før score</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="464"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="627"/>
         <source>Finish round</source>
         <translation>Fullfør runde</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="470"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="633"/>
         <source>Abandon round</source>
         <translation>Avbryt runde</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="480"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="643"/>
         <source>The round will be saved to history.</source>
         <translation>Runden lagres i historikken.</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="487"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="650"/>
         <source>The active round will be closed.</source>
         <translation>Den aktive runden avsluttes.</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="479"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="642"/>
         <source>Finish round?</source>
         <translation>Fullføre runden?</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="123"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="23"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="717"/>
+        <source>Drive</source>
+        <translation>Drive</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="24"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="718"/>
+        <source>Approach</source>
+        <translation>Innspill</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="25"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="719"/>
+        <source>Chip</source>
+        <translation>Chip</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="26"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="720"/>
+        <source>Putt</source>
+        <translation>Putt</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="27"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="721"/>
+        <source>Unknown</source>
+        <translation>Ukjent</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="36"/>
+        <source>GPS</source>
+        <translation>GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="37"/>
+        <source>No GPS</source>
+        <translation>Ingen GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="151"/>
         <source>No weather data for this round</source>
         <translation>Ingen værdata for denne runden</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="232"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="267"/>
         <source>Waiting for GPS</source>
         <translation>Venter på GPS</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="255"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="290"/>
         <source>Plays like</source>
         <translation>Spiller som</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="282"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="317"/>
         <source>Club</source>
         <translation>Kølle</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="437"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="371"/>
+        <source>%1 tracked</source>
+        <translation>%1 registrert</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="373"/>
+        <source>GPS will be saved</source>
+        <translation>GPS lagres</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="374"/>
+        <source>No GPS — records anyway</source>
+        <translation>Ingen GPS — registreres likevel</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="402"/>
+        <source>Edit last recorded stroke type</source>
+        <translation>Rediger sist registrerte slagtype</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="429"/>
+        <source>Last stroke</source>
+        <translation>Siste slag</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="462"/>
+        <source>Undo</source>
+        <translation>Angre</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="466"/>
+        <source>Undo last recorded stroke</source>
+        <translation>Angre sist registrerte slag</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="473"/>
+        <source>Record stroke</source>
+        <translation>Registrer slag</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="477"/>
+        <source>Record stroke with GPS</source>
+        <translation>Registrer slag med GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="478"/>
+        <source>Record stroke without GPS</source>
+        <translation>Registrer slag uten GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="600"/>
         <source>Open full map</source>
         <translation>Åpne hele kartet</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="481"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="644"/>
         <source>Finish</source>
         <translation>Fullfør</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="486"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="649"/>
         <source>Abandon round?</source>
         <translation>Avbryte runden?</translation>
     </message>
     <message>
-        <location filename="../qml/screens/LiveHoleScreen.qml" line="489"/>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="652"/>
         <source>Abandon</source>
         <translation>Avbryt runde</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="689"/>
+        <source>Correct stroke type</source>
+        <translation>Korriger slagtype</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="704"/>
+        <source>Close stroke type picker</source>
+        <translation>Lukk slagtypevelger</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/LiveHoleScreen.qml" line="731"/>
+        <source>Set stroke type to %1</source>
+        <translation>Sett slagtype til %1</translation>
     </message>
 </context>
 <context>
@@ -666,174 +1037,189 @@
         <translation>Bom</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="81"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="90"/>
         <source>Round details</source>
         <translation>Rundedetaljer</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="100"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="109"/>
         <source>Round overview</source>
         <translation>Rundeoversikt</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="114"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="123"/>
         <source>To par</source>
         <translation>Mot par</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="114"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="123"/>
         <source>Points</source>
         <translation>Poeng</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="131"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="140"/>
         <source>Gross</source>
         <translation>Brutto</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="142"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="151"/>
         <source>Eagle</source>
         <translation>Eagle</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="145"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="154"/>
         <source>Birdie</source>
         <translation>Birdie</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="148"/>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="272"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="157"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="315"/>
         <source>Par</source>
         <translation>Par</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="187"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="196"/>
         <source>Weather recorded</source>
         <translation>Vær registrert</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="188"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="197"/>
         <source>Weather not recorded</source>
         <translation>Vær ikke registrert</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="197"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="206"/>
         <source>Measurements unavailable</source>
         <translation>Målinger utilgjengelige</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="199"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="208"/>
         <source>Source: %1</source>
         <translation>Kilde: %1</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="202"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="211"/>
         <source>Captured only when a source is available</source>
         <translation>Registreres bare når en kilde er tilgjengelig</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="212"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="221"/>
         <source>Fairways %1 · GIR %2</source>
         <translation>Fairwayer %1 · GIR %2</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="225"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="234"/>
         <source>Average putts %1 · Penalties %2</source>
         <translation>Snittputter %1 · Straffeslag %2</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="236"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="245"/>
         <source>Longest drive: %1</source>
         <translation>Lengste drive: %1</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="240"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="249"/>
         <source>Not recorded</source>
         <translation>Ikke registrert</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="251"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="259"/>
+        <source>%1 tracked · %2 scored</source>
+        <translation>%1 registrert · %2 scoreført</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="269"/>
+        <source>Drive %1 · Approach %2 · Chip %3</source>
+        <translation>Drive %1 · Innspill %2 · Chip %3</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="280"/>
+        <source>Putt %1 · Unknown %2</source>
+        <translation>Putt %1 · Ukjent %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="294"/>
         <source>Scorecard</source>
         <translation>Scorekort</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="271"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="314"/>
         <source>Hole</source>
         <translation>Hull</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="273"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="316"/>
         <source>SI</source>
         <translation>Ind.</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="274"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="317"/>
         <source>Score</source>
         <translation>Score</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="275"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="318"/>
         <source>Pts</source>
         <translation>P.</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="276"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="319"/>
         <source>Putts</source>
         <translation>Putter</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="277"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="320"/>
         <source>Pen.</source>
         <translation>Straff</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="278"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="321"/>
         <source>Fairway</source>
         <translation>Fairway</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="279"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="322"/>
         <source>GIR</source>
         <translation>GIR</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="326"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="369"/>
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="327"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="370"/>
         <source>No</source>
         <translation>Nei</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="353"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="396"/>
         <source>JSON</source>
         <translation>JSON</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="358"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="401"/>
         <source>CSV</source>
         <translation>CSV</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="364"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="407"/>
         <source>Resume</source>
         <translation>Fortsett</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="375"/>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="389"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="418"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="432"/>
         <source>Delete</source>
         <translation>Slett</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="386"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="429"/>
         <source>Delete round?</source>
         <translation>Slette runden?</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundDetailScreen.qml" line="387"/>
+        <location filename="../qml/screens/RoundDetailScreen.qml" line="430"/>
         <source>This permanently removes the local scorecard and statistics.</source>
         <translation>Dette sletter det lokale scorekortet og statistikken permanent.</translation>
     </message>
@@ -841,52 +1227,52 @@
 <context>
     <name>RoundMapScreen</name>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="169"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="181"/>
         <source>Back</source>
         <translation>Tilbake</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="179"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="191"/>
         <source>Hole %1</source>
         <translation>Hull %1</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="195"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="207"/>
         <source>North up</source>
         <translation>Nord opp</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="217"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="229"/>
         <source>Zoom in</source>
         <translation>Zoom inn</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="223"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="235"/>
         <source>Zoom out</source>
         <translation>Zoom ut</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="277"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="289"/>
         <source>Undo</source>
         <translation>Angre</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="288"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="300"/>
         <source>Done</source>
         <translation>Ferdig</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="303"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="315"/>
         <source>Clear</source>
         <translation>Tøm</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="303"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="315"/>
         <source>Hide analysis</source>
         <translation>Skjul analyse</translation>
     </message>
     <message>
-        <location filename="../qml/screens/RoundMapScreen.qml" line="260"/>
+        <location filename="../qml/screens/RoundMapScreen.qml" line="272"/>
         <source>Measure</source>
         <translation>Mål</translation>
     </message>
@@ -983,17 +1369,17 @@
 <context>
     <name>ScorePromptBanner</name>
     <message>
-        <location filename="../qml/components/ScorePromptBanner.qml" line="31"/>
+        <location filename="../qml/components/ScorePromptBanner.qml" line="42"/>
         <source>Ready to score hole %1?</source>
         <translation>Klar til å føre score på hull %1?</translation>
     </message>
     <message>
-        <location filename="../qml/components/ScorePromptBanner.qml" line="43"/>
+        <location filename="../qml/components/ScorePromptBanner.qml" line="54"/>
         <source>Enter score</source>
         <translation>Før score</translation>
     </message>
     <message>
-        <location filename="../qml/components/ScorePromptBanner.qml" line="58"/>
+        <location filename="../qml/components/ScorePromptBanner.qml" line="69"/>
         <source>Dismiss</source>
         <translation>Lukk</translation>
     </message>
@@ -1349,7 +1735,7 @@
     <name>StaticMapPreview</name>
     <message>
         <location filename="../qml/components/StaticMapPreview.qml" line="14"/>
-        <location filename="../qml/components/StaticMapPreview.qml" line="69"/>
+        <location filename="../qml/components/StaticMapPreview.qml" line="82"/>
         <source>Open full map</source>
         <translation>Åpne hele kartet</translation>
     </message>
@@ -1357,92 +1743,107 @@
 <context>
     <name>StatsScreen</name>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="44"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="53"/>
         <source>Albatross</source>
         <translation>Albatross</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="45"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="54"/>
         <source>Eagle</source>
         <translation>Eagle</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="46"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="55"/>
         <source>Birdie</source>
         <translation>Birdie</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="47"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="56"/>
         <source>Par</source>
         <translation>Par</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="48"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="57"/>
         <source>Bogey</source>
         <translation>Bogey</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="61"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="70"/>
         <source>Statistics</source>
         <translation>Statistikk</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="75"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="84"/>
         <source>All courses</source>
         <translation>Alle baner</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="90"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="99"/>
         <source>%1 completed rounds · %2 holes</source>
         <translation>%1 fullførte runder · %2 hull</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="111"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="120"/>
         <source>Average to par</source>
         <translation>Snitt mot par</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="120"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="129"/>
         <source>Best round</source>
         <translation>Beste runde</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="128"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="137"/>
         <source>Consistency</source>
         <translation>Jevnhet</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="136"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="145"/>
         <source>Longest drive</source>
         <translation>Lengste drive</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="155"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="164"/>
         <source>Recent form</source>
         <translation>Nylig form</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="255"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="264"/>
         <source>Finish a round to start your trend</source>
         <translation>Fullfør en runde for å starte utviklingskurven</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="267"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="276"/>
         <source>Scoring mix</source>
         <translation>Scorefordeling</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="320"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="329"/>
         <source>Fairways %1 · GIR %2 · Putts %3</source>
         <translation>Fairwayer %1 · GIR %2 · Putter %3</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="337"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="346"/>
         <source>L %1% · C %2% · R %3% · M %4%</source>
         <translation>V %1 % · S %2 % · H %3 % · B %4 %</translation>
     </message>
     <message>
-        <location filename="../qml/screens/StatsScreen.qml" line="49"/>
+        <location filename="../qml/screens/StatsScreen.qml" line="359"/>
+        <source>%1 tracked · %2 scored</source>
+        <translation>%1 registrert · %2 scoreført</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/StatsScreen.qml" line="370"/>
+        <source>Drive %1 · Approach %2 · Chip %3</source>
+        <translation>Drive %1 · Innspill %2 · Chip %3</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/StatsScreen.qml" line="381"/>
+        <source>Putt %1 · Unknown %2</source>
+        <translation>Putt %1 · Ukjent %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/StatsScreen.qml" line="58"/>
         <source>Double+</source>
         <translation>Dobbel+</translation>
     </message>
@@ -1473,7 +1874,7 @@
 <context>
     <name>TopBar</name>
     <message>
-        <location filename="../qml/components/TopBar.qml" line="22"/>
+        <location filename="../qml/components/TopBar.qml" line="28"/>
         <source>Back</source>
         <translation>Tilbake</translation>
     </message>
@@ -1686,201 +2087,232 @@
 <context>
     <name>opencaddie::ui::AppController</name>
     <message>
-        <location filename="../AppController.cpp" line="113"/>
+        <location filename="../AppController.cpp" line="168"/>
         <source>Course cache limit reached. Remove a course or increase the limit in Settings.</source>
         <translation>Lagringsgrensen er nådd. Fjern en bane eller øk grensen i Innstillinger.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="128"/>
+        <location filename="../AppController.cpp" line="183"/>
         <source>%1 is ready offline.</source>
         <translation>%1 er klar for frakoblet bruk.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="399"/>
+        <location filename="../AppController.cpp" line="499"/>
         <source>OpenCaddie Demo Course</source>
         <translation>OpenCaddie-demobane</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="405"/>
+        <location filename="../AppController.cpp" line="505"/>
         <source>Bundled</source>
         <translation>Inkludert</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="420"/>
-        <location filename="../AppController.cpp" line="1397"/>
+        <location filename="../AppController.cpp" line="520"/>
+        <location filename="../AppController.cpp" line="1656"/>
         <source>m</source>
         <translation>m</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="420"/>
-        <location filename="../AppController.cpp" line="1397"/>
+        <location filename="../AppController.cpp" line="520"/>
+        <location filename="../AppController.cpp" line="1656"/>
         <source>yd</source>
         <translation>yd</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="519"/>
+        <location filename="../AppController.cpp" line="620"/>
         <source>Offline course removed.</source>
         <translation>Den frakoblede banen er fjernet.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="562"/>
-        <location filename="../AppController.cpp" line="618"/>
+        <location filename="../AppController.cpp" line="663"/>
+        <location filename="../AppController.cpp" line="719"/>
         <source>Course map data is invalid.</source>
         <translation>Banekartdataene er ugyldige.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="598"/>
-        <location filename="../AppController.cpp" line="877"/>
+        <location filename="../AppController.cpp" line="699"/>
+        <location filename="../AppController.cpp" line="1127"/>
         <source>Finish or abandon the active round first.</source>
         <translation>Fullfør eller avbryt den aktive runden først.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="606"/>
+        <location filename="../AppController.cpp" line="707"/>
         <source>The selected course is not available offline.</source>
         <translation>Den valgte banen er ikke tilgjengelig frakoblet.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="627"/>
+        <location filename="../AppController.cpp" line="728"/>
         <source>Stableford needs valid par and stroke index for every hole.</source>
         <translation>Stableford krever gyldig par og indeks for hvert hull.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="634"/>
+        <location filename="../AppController.cpp" line="735"/>
         <source>Correct missing par/index data before using Stableford.</source>
         <translation>Korriger manglende par-/indeksdata før Stableford brukes.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="659"/>
+        <location filename="../AppController.cpp" line="760"/>
         <source>Could not start the round.</source>
         <translation>Kunne ikke starte runden.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="665"/>
+        <location filename="../AppController.cpp" line="766"/>
         <source>Could not import the course analysis.</source>
         <translation>Kunne ikke importere baneanalysen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="696"/>
+        <location filename="../AppController.cpp" line="799"/>
         <source>Could not abandon the round.</source>
         <translation>Kunne ikke avbryte runden.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="712"/>
+        <location filename="../AppController.cpp" line="818"/>
         <source>Could not finish the round.</source>
         <translation>Kunne ikke fullføre runden.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="720"/>
+        <location filename="../AppController.cpp" line="829"/>
         <source>Round saved.</source>
         <translation>Runden er lagret.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="815"/>
+        <location filename="../AppController.cpp" line="933"/>
+        <source>The score limit for this hole has been reached.</source>
+        <translation>Maks antall slag for hullet er nådd.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="945"/>
+        <source>The selected club is no longer available.</source>
+        <translation>Den valgte køllen er ikke lenger tilgjengelig.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="998"/>
+        <source>The stroke could not be recorded.</source>
+        <translation>Slaget kunne ikke registreres.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="1011"/>
+        <source>The recorded stroke could not be undone.</source>
+        <translation>Det registrerte slaget kunne ikke angres.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="1031"/>
+        <source>The stroke type could not be changed.</source>
+        <translation>Slagtypen kunne ikke endres.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="1045"/>
+        <location filename="../AppController.cpp" line="1067"/>
+        <source>Enter valid club details.</source>
+        <translation>Angi gyldige kølledetaljer.</translation>
+    </message>
+    <message>
+        <location filename="../AppController.cpp" line="1052"/>
         <source>Could not add the club.</source>
         <translation>Kunne ikke legge til køllen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="834"/>
+        <location filename="../AppController.cpp" line="1081"/>
         <source>Could not update the club.</source>
         <translation>Kunne ikke oppdatere køllen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="841"/>
+        <location filename="../AppController.cpp" line="1091"/>
         <source>Could not remove the club.</source>
         <translation>Kunne ikke fjerne køllen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="851"/>
+        <location filename="../AppController.cpp" line="1101"/>
         <source>Could not reorder clubs.</source>
         <translation>Kunne ikke endre rekkefølgen på køllene.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="913"/>
+        <location filename="../AppController.cpp" line="1163"/>
         <source>Exported to %1</source>
         <translation>Eksportert til %1</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="932"/>
+        <location filename="../AppController.cpp" line="1182"/>
         <source>Could not save the hole analysis.</source>
         <translation>Kunne ikke lagre hullanalysen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="936"/>
+        <location filename="../AppController.cpp" line="1186"/>
         <source>Analysis saved for hole %1.</source>
         <translation>Analyse lagret for hull %1.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="943"/>
+        <location filename="../AppController.cpp" line="1193"/>
         <source>Could not clear the hole analysis.</source>
         <translation>Kunne ikke tømme hullanalysen.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="947"/>
+        <location filename="../AppController.cpp" line="1197"/>
         <source>Analysis cleared for hole %1.</source>
         <translation>Analyse tømt for hull %1.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1061"/>
+        <location filename="../AppController.cpp" line="1311"/>
         <source>Use HTTPS (HTTP is allowed for localhost only).</source>
         <translation>Bruk HTTPS (HTTP er kun tillatt for localhost).</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1089"/>
+        <location filename="../AppController.cpp" line="1339"/>
         <source>Could not reset settings.</source>
         <translation>Kunne ikke nullstille innstillingene.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1096"/>
+        <location filename="../AppController.cpp" line="1346"/>
         <source>Settings reset.</source>
         <translation>Innstillingene er nullstilt.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1102"/>
+        <location filename="../AppController.cpp" line="1352"/>
         <source>%1 m</source>
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1103"/>
+        <location filename="../AppController.cpp" line="1353"/>
         <source>%1 yd</source>
         <translation>%1 yd</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1262"/>
+        <location filename="../AppController.cpp" line="1521"/>
         <source>Default</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1312"/>
+        <location filename="../AppController.cpp" line="1571"/>
         <source>Waiting for GPS</source>
         <translation>Venter på GPS</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1315"/>
+        <location filename="../AppController.cpp" line="1574"/>
         <source>Low accuracy</source>
         <translation>Lav nøyaktighet</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1315"/>
+        <location filename="../AppController.cpp" line="1574"/>
         <source>Stale GPS fix</source>
         <translation>Utdatert GPS-posisjon</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1317"/>
+        <location filename="../AppController.cpp" line="1576"/>
         <source>GPS ready</source>
         <translation>GPS klar</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1394"/>
+        <location filename="../AppController.cpp" line="1653"/>
         <source>%1%2 %3</source>
         <translation>%1%2 %3</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1421"/>
+        <location filename="../AppController.cpp" line="1718"/>
         <source>Score could not be saved.</source>
         <translation>Scoren kunne ikke lagres.</translation>
     </message>
     <message>
-        <location filename="../AppController.cpp" line="1528"/>
+        <location filename="../AppController.cpp" line="1825"/>
         <source>Setting could not be saved.</source>
         <translation>Innstillingen kunne ikke lagres.</translation>
     </message>
@@ -1888,24 +2320,24 @@
 <context>
     <name>opencaddie::ui::CourseMapItem</name>
     <message>
-        <location filename="../CourseMapItem.cpp" line="226"/>
+        <location filename="../CourseMapItem.cpp" line="271"/>
         <source>Course map is unavailable.</source>
         <translation>Banekartet er utilgjengelig.</translation>
     </message>
     <message>
-        <location filename="../CourseMapItem.cpp" line="232"/>
-        <location filename="../CourseMapItem.cpp" line="242"/>
-        <location filename="../CourseMapItem.cpp" line="262"/>
+        <location filename="../CourseMapItem.cpp" line="277"/>
+        <location filename="../CourseMapItem.cpp" line="287"/>
+        <location filename="../CourseMapItem.cpp" line="307"/>
         <source>Course map data is invalid.</source>
         <translation>Banekartdataene er ugyldige.</translation>
     </message>
     <message>
-        <location filename="../CourseMapItem.cpp" line="256"/>
+        <location filename="../CourseMapItem.cpp" line="301"/>
         <source>This hole has no map geometry.</source>
         <translation>Dette hullet mangler kartgeometri.</translation>
     </message>
     <message>
-        <location filename="../CourseMapItem.cpp" line="284"/>
+        <location filename="../CourseMapItem.cpp" line="329"/>
         <source>Course map could not be rendered.</source>
         <translation>Banekartet kunne ikke tegnes.</translation>
     </message>

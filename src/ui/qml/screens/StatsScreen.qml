@@ -39,6 +39,15 @@ Item {
                ? Number(value || 0).toFixed(1) : "—"
     }
 
+    function shotCount(key) {
+        var values = app.statistics.shotTypeDistribution || []
+        for (var index = 0; index < values.length; ++index) {
+            if (values[index].key === key)
+                return Number(values[index].count || 0)
+        }
+        return 0
+    }
+
     function outcomeLabel(key) {
         switch (key) {
         case "albatross": return qsTr("Albatross")
@@ -344,6 +353,38 @@ Item {
                     font.pixelSize: Theme.px(9)
                     elide: Text.ElideRight
                     visible: Number(app.statistics.fairwaysRecorded || 0) > 0
+                }
+                Text {
+                    width: parent.width
+                    text: qsTr("%1 tracked · %2 scored")
+                          .arg(app.statistics.trackedStrokes || 0)
+                          .arg(app.statistics.scoredStrokes || 0)
+                    color: Theme.text
+                    font.family: "Inter"
+                    font.weight: Font.DemiBold
+                    font.pixelSize: Theme.px(10)
+                    elide: Text.ElideRight
+                }
+                Text {
+                    width: parent.width
+                    text: qsTr("Drive %1 · Approach %2 · Chip %3")
+                          .arg(root.shotCount("drive"))
+                          .arg(root.shotCount("approach"))
+                          .arg(root.shotCount("chip"))
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(9)
+                    elide: Text.ElideRight
+                }
+                Text {
+                    width: parent.width
+                    text: qsTr("Putt %1 · Unknown %2")
+                          .arg(root.shotCount("putt"))
+                          .arg(root.shotCount("unknown"))
+                    color: Theme.textMuted
+                    font.family: "Inter"
+                    font.pixelSize: Theme.px(9)
+                    elide: Text.ElideRight
                 }
             }
         }

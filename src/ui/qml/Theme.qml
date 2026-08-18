@@ -26,9 +26,12 @@ QtObject {
     readonly property int statusHeight: 22
     readonly property int gutter: 24
     readonly property int navigationHeight: 64
+    readonly property int motionPress: 90
     readonly property int motionFast: 140
     readonly property int motion: 180
     readonly property int motionSheet: 220
+    readonly property int motionSlow: 360
+    readonly property int motionAmbient: 3600
 
     readonly property int displayHole: 50
     readonly property int distancePrimary: 62

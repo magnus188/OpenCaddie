@@ -17,6 +17,45 @@ Dialog {
     header: null
     footer: null
 
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Theme.motionSheet
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 0.975
+                to: 1
+                duration: Theme.motionSlow
+                easing.type: Easing.OutBack
+                easing.overshoot: 0.55
+            }
+        }
+    }
+
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: Theme.motionFast
+                easing.type: Easing.InCubic
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 1
+                to: 0.985
+                duration: Theme.motionFast
+                easing.type: Easing.InCubic
+            }
+        }
+    }
+
     background: Rectangle {
         color: Theme.surface
         radius: Theme.sheetRadius

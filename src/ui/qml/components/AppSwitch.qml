@@ -11,9 +11,18 @@ AbstractButton {
     width: implicitWidth
     height: implicitHeight
     checkable: true
+    scale: control.down ? 0.96 : 1
     Accessible.role: Accessible.CheckBox
     Accessible.name: accessibleName
     Accessible.checked: checked
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: control.down ? Theme.motionPress : Theme.motion
+            easing.type: control.down ? Easing.OutCubic : Easing.OutBack
+            easing.overshoot: 0.55
+        }
+    }
 
     background: Item {
         Rectangle {
@@ -40,9 +49,15 @@ AbstractButton {
                         easing.type: Easing.OutCubic
                     }
                 }
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionFast }
+                }
             }
 
             Behavior on color {
+                ColorAnimation { duration: Theme.motionFast }
+            }
+            Behavior on border.color {
                 ColorAnimation { duration: Theme.motionFast }
             }
         }

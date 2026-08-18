@@ -12,6 +12,7 @@ enum class UnitSystem { Metric, Imperial };
 enum class ScoringMode { StrokePlay, Stableford };
 enum class RoundStatus { InProgress, Completed, Abandoned };
 enum class FairwayResult { NotRecorded, Left, Centre, Right, Missed };
+enum class ClubType { Driver, Wood, Hybrid, Iron, Wedge, Putter, Other };
 
 struct GeoPoint {
     double latitude = 0.0;
@@ -48,6 +49,7 @@ struct Club {
     double carryMetres = 0.0;
     bool enabled = true;
     int position = 0;
+    ClubType type = ClubType::Other;
 };
 
 struct ClubAdvice {
@@ -69,4 +71,3 @@ struct LocalProjection {
 };
 
 } // namespace opencaddie::domain
-

@@ -4,6 +4,7 @@
 #include "domain/ClubRecommendation.h"
 #include "domain/Geo.h"
 #include "domain/Scoring.h"
+#include "domain/ShotTracking.h"
 #include "domain/Statistics.h"
 #include "integrations/IntegrationCatalog.h"
 
@@ -53,6 +54,59 @@ domain::FairwayResult fairwayValue(const QString &value) {
     return domain::FairwayResult::NotRecorded;
 }
 
+QString clubTypeName(const domain::ClubType type) {
+    switch (type) {
+    case domain::ClubType::Driver:
+        return QStringLiteral("driver");
+    case domain::ClubType::Wood:
+        return QStringLiteral("wood");
+    case domain::ClubType::Hybrid:
+        return QStringLiteral("hybrid");
+    case domain::ClubType::Iron:
+        return QStringLiteral("iron");
+    case domain::ClubType::Wedge:
+        return QStringLiteral("wedge");
+    case domain::ClubType::Putter:
+        return QStringLiteral("putter");
+    case domain::ClubType::Other:
+        return QStringLiteral("other");
+    }
+    return QStringLiteral("other");
+}
+
+std::optional<domain::ClubType> clubTypeValue(const QString &value) {
+    if (value == QStringLiteral("driver"))
+        return domain::ClubType::Driver;
+    if (value == QStringLiteral("wood"))
+        return domain::ClubType::Wood;
+    if (value == QStringLiteral("hybrid"))
+        return domain::ClubType::Hybrid;
+    if (value == QStringLiteral("iron"))
+        return domain::ClubType::Iron;
+    if (value == QStringLiteral("wedge"))
+        return domain::ClubType::Wedge;
+    if (value == QStringLiteral("putter"))
+        return domain::ClubType::Putter;
+    if (value == QStringLiteral("other"))
+        return domain::ClubType::Other;
+    return std::nullopt;
+}
+
+QString teeKey(const QString &value) { return value.trimmed().toCaseFolded(); }
+
+QString strokeTypeName(const domain::StrokeType type) {
+    const std::string_view key = domain::strokeTypeKey(type);
+    return QString::fromLatin1(key.data(), static_cast<qsizetype>(key.size()));
+}
+
+QString displayedStrokeType(const QString &value) {
+    if (value == QStringLiteral("tee"))
+        return QStringLiteral("drive");
+    return domain::strokeTypeFromKey(value.toStdString())
+               ? value
+               : QStringLiteral("unknown");
+}
+
 QUrl resourceUrl(const QString &relativePath) {
     return QUrl(
         QStringLiteral("qrc:/qt/qml/OpenCaddie/assets/demo/%1").arg(relativePath));
@@ -67,7 +121,8 @@ AppController::AppController(storage::Database *database,
     : QObject(parent), m_database(database), m_provider(provider),
       m_positionProvider(positionProvider), m_powerProvider(powerProvider),
       m_settings(database->connection()), m_clubs(database->connection()),
-      m_rounds(database->connection()), m_courseAnalyses(database->connection()),
+      m_rounds(database->connection()), m_shots(database->connection()),
+      m_courseAnalyses(database->connection()),
       m_statisticsRepository(database->connection()),
       m_courseRepository(database->connection()),
       m_packages(std::move(coursesRoot), m_courseRepository),
@@ -164,6 +219,7 @@ bool AppController::initialize() {
         }
         m_holeSelector.selectManually(m_activeRound->currentHole);
         loadCurrentScore();
+        reloadCurrentHoleShots();
         rebuildScorecard();
     }
     m_freshnessTimer.start();
@@ -234,6 +290,50 @@ QVariantList AppController::roundLayups() const {
     return m_activeRound
                ? m_courseAnalyses.roundLayups(m_activeRound->id, currentHole())
                : QVariantList{};
+}
+bool AppController::shotGpsAvailable() const {
+    return m_activeRound &&
+           domain::isUsableFix(m_lastFix, std::chrono::system_clock::now(), 25.0,
+                               std::chrono::seconds(10));
+}
+int AppController::recordedStrokeCount() const {
+    return static_cast<int>(m_currentHoleShots.size());
+}
+QVariantMap AppController::lastRecordedStroke() const {
+    for (auto iterator = m_currentHoleShots.crbegin();
+         iterator != m_currentHoleShots.crend(); ++iterator) {
+        if (iterator->sourceProvider != QStringLiteral("opencaddie"))
+            continue;
+        QVariantMap result{
+            {QStringLiteral("id"), iterator->id},
+            {QStringLiteral("sequence"), iterator->sequence},
+            {QStringLiteral("type"),
+             iterator->shotType.isEmpty() ? QStringLiteral("unknown")
+                                          : iterator->shotType},
+            {QStringLiteral("hasGps"), iterator->endLatitude.has_value() &&
+                                           iterator->endLongitude.has_value()},
+            {QStringLiteral("gpsAvailable"),
+             iterator->endLatitude.has_value() &&
+                 iterator->endLongitude.has_value()},
+        };
+        if (iterator->distanceMetres) {
+            result.insert(QStringLiteral("distance"), *iterator->distanceMetres);
+            result.insert(QStringLiteral("distanceMetres"), *iterator->distanceMetres);
+        }
+        if (!iterator->clubId.isEmpty())
+            result.insert(QStringLiteral("clubId"), iterator->clubId);
+        if (!iterator->clubName.isEmpty())
+            result.insert(QStringLiteral("clubName"), iterator->clubName);
+        return result;
+    }
+    return {};
+}
+QVariantList AppController::currentHoleShotTrail() const {
+    return m_currentHoleShotTrail;
+}
+bool AppController::canUndoRecordedStroke() const {
+    return !m_currentHoleShots.empty() &&
+           m_currentHoleShots.back().sourceProvider == QStringLiteral("opencaddie");
 }
 bool AppController::metric() const { return m_metric; }
 QString AppController::language() const { return m_language; }
@@ -420,6 +520,7 @@ void AppController::reloadClubs() {
             {QStringLiteral("unit"), m_metric ? tr("m") : tr("yd")},
             {QStringLiteral("enabled"), club.enabled},
             {QStringLiteral("position"), club.position},
+            {QStringLiteral("type"), clubTypeName(club.type)},
         });
     }
     emit clubsChanged();
@@ -670,6 +771,7 @@ void AppController::startRound(const QString &slug, const int holes,
     m_nearGreenTrigger.reset(1);
     m_holeSelector.selectManually(1);
     loadCurrentScore();
+    reloadCurrentHoleShots();
     rebuildScorecard();
     emit roundChanged();
     emit liveChanged();
@@ -685,6 +787,7 @@ void AppController::resumeRound() {
         loadCourseData(course->path);
     }
     loadCurrentScore();
+    reloadCurrentHoleShots();
     updateLiveData();
     setScreen(QStringLiteral("LiveHoleScreen"));
 }
@@ -697,6 +800,9 @@ void AppController::abandonRound() {
         return;
     }
     m_activeRound.reset();
+    m_currentHoleShots.clear();
+    m_currentHoleShotTrail.clear();
+    emit shotTrackingChanged();
     refreshHistory();
     emit roundChanged();
     setScreen(QStringLiteral("WelcomeScreen"));
@@ -713,6 +819,9 @@ void AppController::finishRound() {
         return;
     }
     m_activeRound.reset();
+    m_currentHoleShots.clear();
+    m_currentHoleShotTrail.clear();
+    emit shotTrackingChanged();
     refreshHistory();
     refreshStatistics();
     selectHistoryRound(finishedRoundId);
@@ -747,6 +856,7 @@ void AppController::setHole(const int hole) {
     m_holeSelector.selectManually(hole);
     m_nearGreenTrigger.reset(hole);
     loadCurrentScore();
+    reloadCurrentHoleShots();
     updateLiveData();
     emit liveChanged();
     emit roundChanged();
@@ -801,39 +911,179 @@ bool AppController::saveHoleScore(const int strokes, const int putts,
     m_currentScore.notes = notes.left(1'000).toStdString();
     const bool saved = saveCurrentScore();
     if (saved) {
+        celebrateCurrentHole();
         static_cast<void>(m_nearGreenTrigger.update(
             currentHole(), m_centreDistance, true, true));
     }
     return saved;
 }
 
-void AppController::addClub(const QString &name, const double carryDisplayUnits) {
-    if (name.trimmed().isEmpty() || carryDisplayUnits <= 0.0)
-        return;
-    if (m_clubs.create(m_clubs.defaultProfileId(), name, toMetres(carryDisplayUnits))
+bool AppController::recordStroke() {
+    return recordStrokeForClub({});
+}
+
+bool AppController::recordStrokeWithClub(const QString &clubId) {
+    return recordStrokeForClub(clubId);
+}
+
+bool AppController::recordStrokeForClub(const QString &clubId) {
+    if (!m_activeRound)
+        return false;
+    if (m_currentScore.strokes >= 20) {
+        showMessage(tr("The score limit for this hole has been reached."));
+        return false;
+    }
+
+    QVariantMap selectedClub;
+    if (!clubId.isEmpty()) {
+        const auto club = std::ranges::find_if(
+            m_clubValues, [&clubId](const QVariant &value) {
+                return value.toMap().value(QStringLiteral("id")).toString() ==
+                       clubId;
+            });
+        if (club == m_clubValues.cend()) {
+            showMessage(tr("The selected club is no longer available."));
+            return false;
+        }
+        selectedClub = club->toMap();
+    }
+
+    const bool gpsAvailable = shotGpsAvailable();
+    const int trackedBefore = static_cast<int>(m_currentHoleShots.size());
+    const int scoreBefore = m_currentScore.strokes;
+    const HoleNavigation navigation = currentNavigation();
+    std::optional<domain::GeoPoint> start;
+    if (gpsAvailable) {
+        if (scoreBefore == 0 && trackedBefore == 0) {
+            const auto tee = navigation.tees.constFind(teeKey(m_activeRound->tee));
+            if (tee != navigation.tees.cend())
+                start = tee.value();
+        } else if (scoreBefore == trackedBefore && !m_currentHoleShots.empty()) {
+            const auto &previous = m_currentHoleShots.back();
+            if (previous.endLatitude && previous.endLongitude) {
+                start = domain::GeoPoint{*previous.endLatitude,
+                                         *previous.endLongitude};
+            }
+        }
+    }
+
+    storage::ShotRecord shot;
+    shot.roundId = m_activeRound->id;
+    shot.participantId = m_activeRound->participantId;
+    shot.hole = currentHole();
+    shot.sequence = m_currentHoleShots.empty()
+                        ? 1
+                        : m_currentHoleShots.back().sequence + 1;
+    shot.sourceProvider = QStringLiteral("opencaddie");
+    if (!selectedClub.isEmpty()) {
+        shot.clubId = selectedClub.value(QStringLiteral("id")).toString();
+        shot.clubName = selectedClub.value(QStringLiteral("name")).toString();
+    }
+    if (gpsAvailable) {
+        shot.endLatitude = m_lastFix.point.latitude;
+        shot.endLongitude = m_lastFix.point.longitude;
+        shot.accuracyMetres = m_lastFix.accuracyMetres;
+        if (start) {
+            shot.startLatitude = start->latitude;
+            shot.startLongitude = start->longitude;
+            shot.distanceMetres = domain::haversineMetres(*start, m_lastFix.point);
+        }
+    }
+    const domain::StrokeType type = domain::classifyTrackedStroke(
+        navigation.par, scoreBefore, trackedBefore, gpsAvailable, start,
+        navigation.polygon);
+    shot.shotType = strokeTypeName(type);
+
+    if (!m_shots.appendTrackedStroke(shot, *m_activeRound, currentDefinition())) {
+        showMessage(tr("The stroke could not be recorded."));
+        return false;
+    }
+    loadCurrentScore();
+    reloadCurrentHoleShots();
+    rebuildScorecard();
+    return true;
+}
+
+bool AppController::undoLastRecordedStroke() {
+    if (!m_activeRound || !canUndoRecordedStroke())
+        return false;
+    if (!m_shots.removeLastTrackedStroke(*m_activeRound, currentDefinition())) {
+        showMessage(tr("The recorded stroke could not be undone."));
+        return false;
+    }
+    loadCurrentScore();
+    reloadCurrentHoleShots();
+    rebuildScorecard();
+    return true;
+}
+
+bool AppController::setLastRecordedStrokeType(const QString &type) {
+    if (!m_activeRound || !canUndoRecordedStroke() ||
+        !domain::strokeTypeFromKey(type.toStdString())) {
+        return false;
+    }
+    const QString previousType =
+        displayedStrokeType(m_currentHoleShots.back().shotType);
+    if (previousType == type)
+        return true;
+    if (!m_shots.updateLastTrackedStrokeType(
+            *m_activeRound, currentDefinition(), type)) {
+        showMessage(tr("The stroke type could not be changed."));
+        return false;
+    }
+    loadCurrentScore();
+    reloadCurrentHoleShots();
+    rebuildScorecard();
+    return true;
+}
+
+bool AppController::addClub(const QString &name, const double carryDisplayUnits,
+                            const QString &type, const bool enabled) {
+    const auto parsedType = clubTypeValue(type);
+    if (name.trimmed().isEmpty() || !std::isfinite(carryDisplayUnits) ||
+        carryDisplayUnits <= 0.0 || !parsedType) {
+        showMessage(tr("Enter valid club details."));
+        return false;
+    }
+    if (m_clubs
+            .create(m_clubs.defaultProfileId(), name,
+                    toMetres(carryDisplayUnits), *parsedType, enabled)
             .isEmpty()) {
         showMessage(tr("Could not add the club."));
-        return;
+        return false;
     }
     reloadClubs();
     updateLiveData();
+    return true;
 }
 
-void AppController::updateClub(const QString &id, const QString &name,
-                               const double carryDisplayUnits, const bool enabled) {
+bool AppController::updateClub(const QString &id, const QString &name,
+                               const double carryDisplayUnits,
+                               const QString &type, const bool enabled) {
+    const auto parsedType = clubTypeValue(type);
+    if (id.isEmpty() || name.trimmed().isEmpty() ||
+        !std::isfinite(carryDisplayUnits) || carryDisplayUnits <= 0.0 ||
+        !parsedType) {
+        showMessage(tr("Enter valid club details."));
+        return false;
+    }
     auto values = m_clubs.list(m_clubs.defaultProfileId());
     const auto iterator = std::ranges::find_if(values, [&id](const auto &club) {
         return QString::fromStdString(club.id) == id;
     });
     if (iterator == values.end())
-        return;
+        return false;
     iterator->name = name.toStdString();
     iterator->carryMetres = toMetres(carryDisplayUnits);
     iterator->enabled = enabled;
-    if (!m_clubs.update(*iterator))
+    iterator->type = *parsedType;
+    if (!m_clubs.update(*iterator)) {
         showMessage(tr("Could not update the club."));
+        return false;
+    }
     reloadClubs();
     updateLiveData();
+    return true;
 }
 
 void AppController::removeClub(const QString &id) {
@@ -1159,9 +1409,18 @@ void AppController::loadCourseData(const QString &packagePath) {
         navigation.par = object.value(QStringLiteral("par")).toInt();
         navigation.strokeIndex = object.value(QStringLiteral("handicap")).toInt();
         const QJsonArray tees = object.value(QStringLiteral("tees")).toArray();
-        if (!tees.isEmpty()) {
-            const QJsonObject tee = tees.first().toObject();
-            navigation.teeLabel = tee.value(QStringLiteral("label")).toString();
+        for (qsizetype teeIndex = 0; teeIndex < tees.size(); ++teeIndex) {
+            const QJsonObject tee = tees.at(teeIndex).toObject();
+            const QString label = tee.value(QStringLiteral("label")).toString();
+            const QJsonArray centre = tee.value(QStringLiteral("centre")).toArray();
+            if (!label.trimmed().isEmpty() && centre.size() == 2) {
+                navigation.tees.insert(
+                    teeKey(label),
+                    {centre[1].toDouble(), centre[0].toDouble()});
+            }
+            if (teeIndex != 0)
+                continue;
+            navigation.teeLabel = label;
             const QJsonArray localCentre =
                 tee.value(QStringLiteral("localCentre")).toArray();
             if (localCentre.size() == 2) {
@@ -1398,6 +1657,7 @@ void AppController::updateLiveData() {
         }
     }
     emit liveChanged();
+    emit shotTrackingChanged();
 }
 
 void AppController::loadCurrentScore() {
@@ -1411,6 +1671,43 @@ void AppController::loadCurrentScore() {
         }
     }
     emit scoreChanged();
+}
+
+void AppController::reloadCurrentHoleShots() {
+    m_currentHoleShots.clear();
+    m_currentHoleShotTrail.clear();
+    if (!m_activeRound) {
+        emit shotTrackingChanged();
+        return;
+    }
+    m_currentHoleShots = m_shots.list(m_activeRound->id,
+                                      m_activeRound->participantId,
+                                      currentHole());
+    const HoleNavigation navigation = currentNavigation();
+    for (const auto &shot : m_currentHoleShots) {
+        QVariantMap segment{
+            {QStringLiteral("sequence"), shot.sequence},
+            {QStringLiteral("type"), displayedStrokeType(shot.shotType)},
+        };
+        if (shot.distanceMetres) {
+            segment.insert(QStringLiteral("distance"), *shot.distanceMetres);
+            segment.insert(QStringLiteral("distanceMetres"), *shot.distanceMetres);
+        }
+        if (shot.startLatitude && shot.startLongitude) {
+            const auto [x, y] = domain::projectToLocal(
+                {*shot.startLatitude, *shot.startLongitude}, navigation.projection);
+            segment.insert(QStringLiteral("startX"), x);
+            segment.insert(QStringLiteral("startY"), y);
+        }
+        if (shot.endLatitude && shot.endLongitude) {
+            const auto [x, y] = domain::projectToLocal(
+                {*shot.endLatitude, *shot.endLongitude}, navigation.projection);
+            segment.insert(QStringLiteral("endX"), x);
+            segment.insert(QStringLiteral("endY"), y);
+        }
+        m_currentHoleShotTrail.push_back(segment);
+    }
+    emit shotTrackingChanged();
 }
 
 bool AppController::saveCurrentScore() {
