@@ -60,56 +60,61 @@ final result: passed
 
 ## Evidence
 
-- Source visual truth: `.context/club-rack-reference.png`
-- Implementation: `src/ui/qml/screens/BagScreen.qml` and `src/ui/qml/components/ClubArtwork.qml`
-- Dark implementation capture: `.context/club-rack-final-dark-heads.png`
-- Light/Norwegian/150% capture: `.context/club-rack-light-nb-150-heads.png`
-- Same-input comparison: `.context/design-qa/club-rack-comparison.png`
-- Viewport: 800 x 480 logical pixels, captured at 1600 x 960 (`@2x`).
-- Normalization: the 1619 x 971 source and 1600 x 960 implementation were both normalized to exactly 800 x 480 before comparison. The rack focus uses the same 800 px scale and the same 240 px crop.
-- State: `BagScreen`, dark palette, English, metric units, 100% text scale, recommendations enabled, 7 iron selected at 145 m.
+- Approved concept reference: `.context/club-rack-reference.png`
+- Pre-refinement baseline: `.context/club-rack-final-dark-heads.png`
+- Refined dark/English/100% capture: `.context/club-rack-refined-dark.png`
+- Refined light/Norwegian/150% capture: `.context/club-rack-refined-light-nb-150.png`
+- Normalized before/after comparison: `.context/design-qa/club-rack-refinement-comparison.png`
+- Additional fixtures: `.context/club-rack-refined-empty.png`, `.context/club-rack-refined-inactive.png`, `.context/club-rack-refined-overflow.png`, and `.context/club-rack-refined-dark-en-imperial.png`
+- Text-scale matrix: dark English and light Norwegian at 80%, 100%, and 150%.
+- Viewport: 800 x 480 logical pixels, captured at 1600 x 960 (`@2x`); comparison inputs normalized to exactly 800 x 480.
+- Primary state: `BagScreen`, dark palette, English, metric units, 100% text scale, Active enabled, 7 iron selected at 145 m.
 
-## Full-view Comparison
+## Before/After Comparison
 
-The upper pair in the combined comparison verifies the complete 800 x 480 screen. The implementation preserves the production top bar and touch-safe quick editor while matching the selected concept's dark equipment rack, bag-at-left composition, six visible clubs, green active state, carry labels, and bottom divider.
+The normalized comparison shows the full approved refinement at one scale. The fixed bag slot is gone and the rack now uses the complete 800 px width. The previous rear/cavity artwork has been replaced only for irons and wedges by transparent, upright striking-face variants with clearly legible horizontal grooves and the same short-shaft composition. The selected club remains fully green with its restrained glow and underline.
 
-## Focused Rack Comparison
-
-The lower pair compares the same rack region at the same scale. The final artwork uses upright three-quarter profile heads with a short shaft above each hosel. The driver, cavity-back iron, wedge, and mallet putter remain visually distinct. The selected 7 iron uses full green colorization, a restrained green glow, green copy, and a green underline. All six clubs fit the initial viewport; larger bags remain horizontally scrollable.
+The quick editor removes the duplicate carry/status summary, recommendation pill, slider, and cramped action column. Club identity, the one-unit numeric stepper, and Active switch form one clear upper row. Save Changes receives two layout units; Details and More receive one each. More presents 56 px Reorder Bag and destructive Remove Club rows. Reordering now uses a direct long-press and horizontal drag, with one Done control and a live position indicator.
 
 ## Required Fidelity Surfaces
 
-- Typography and content: Inter typography, English names, metric carries, and the 7 iron / 145 m state are legible and consistent. The Norwegian 150% stress capture uses intentional ellipsis in narrow rack labels without clipping controls.
-- Spacing and layout rhythm: the 204 px rack, compact editor, dividers, and touch targets remain within the fixed 800 x 480 viewport. The narrowed bag slot allows the full putter delegate to remain visible.
-- Colors and states: neutral clubs use charcoal, black, and brushed steel; only the active club receives the selected green treatment. Disabled opacity remains independent of selection.
-- Image quality: the production PNGs are transparent, tightly fit to their portrait slots, mipmapped, and free of visible magenta keying halos in both light and dark captures.
-- Interaction coverage: selection, carry adjustment, recommendations, save, details, remove, and reorder controls remain present; add/edit uses the details sheet and unsaved changes remain guarded.
+- Typography and content: Inter remains legible across both languages and all tested text scales. Norwegian uses “Aktiv” and “Inaktiv”; narrow rack names intentionally ellipsize at 150% without overlapping adjacent content.
+- Spacing and touch: every new interactive control is at least 48 px high, action gaps are 12 px, and no control clips at 800 x 480. The action sheet rows are 56 px high.
+- Carry editing: tapping the number opens the numeric keyboard and lifts the quick editor so the field remains visible; Done commits the draft; ± moves in one-unit steps; blank input restores the last value; 0 clamps to 1; and 999 clamps to 350 m or 400 yd. The details-sheet carry field also remains above the keyboard.
+- Colors and states: selected artwork remains green; neutral faces retain brushed metal; inactive clubs remain visible with reduced artwork opacity and an amber Inactive label.
+- Image quality: `iron-face.png` and `wedge-face.png` have transparent, tightly cropped edges, correct face orientation, visible grooves at device size, and no chroma-key halo in either theme. All previous artwork files remain bundled and untouched.
+- State handling: first-club selection, empty/Add Club state, overflow scrolling, Active persistence, More dismissal, remove confirmation, drag target boundaries, and unsaved-change guards were exercised in the live app. During a drag, the held card scales to 108%, gains a raised shadow/green outline, and adjacent cards animate into their new slots before drop persistence.
 
 ## Comparison History
 
-- Initial P1: full-length club assets made the heads too small and visually generic in the horizontal rack.
-- Fix: retained the original full-club resources and introduced a separate generated head-artwork set.
-- Follow-up P1: the first head-only generation used oversized face-on product views instead of the mock's profile-with-short-shaft pose.
-- Fix: regenerated every club from the selected mock and existing equipment sources with an upright profile head plus a short shaft segment.
-- Follow-up P2: transparent square padding reduced the apparent head size, the bag slot delayed the first club, and the putter clipped at the right edge.
-- Fix: tightly cropped each transparent asset, reduced the bag slot to 112 px, fit all six delegates, and added a dedicated cropped bag-with-clubs illustration while preserving the prior bag asset.
-- Post-fix evidence: `.context/design-qa/club-rack-comparison.png` shows the final normalized full view and rack crop together.
+- P1: the iron and wedge showed the back/cavity instead of the striking face, so their grooves were absent or visually incorrect.
+- Fix: generated dedicated iron-face and wedge-face assets with front striking surfaces and crisp horizontal score lines; `ClubArtwork.qml` alone redirects those two types.
+- P1: the bag illustration consumed the first rack slot and reduced the useful scrolling area.
+- Fix: removed only its rendering and anchored the horizontal list from edge to edge; the bag assets remain in the repository.
+- P2: the slider made exact one-unit carry changes cumbersome and repeated the carry value in two places.
+- Fix: introduced a direct-entry number stepper with 48 px ± buttons, numeric keyboard support, restoration, and clamping.
+- P2: recommendation copy and the vertical action stack made the editor dense.
+- Fix: renamed the switch to Active, removed the status pill, widened primary actions, and moved reorder/remove into a modal More sheet.
+- Follow-up P2: left/right reorder buttons were slower than direct manipulation and did not preview the resulting order.
+- Fix: replaced movement buttons with long-press drag-and-drop, a local live-order model, animated displaced cards, edge auto-scroll, and a lifted drag card; the final order is persisted on drop.
+- Follow-up P1: the on-screen keyboard covered the quick carry field.
+- Fix: the quick editor now animates upward while its numeric field has focus; both quick and details carry inputs remain fully visible.
 
 ## Findings
 
 No actionable P0, P1, or P2 differences remain.
-
-## Follow-up Polish
-
-- P3: the production top-bar action and richer details/reorder controls differ from the speculative mock because the implemented screen preserves the app's shared components and the approved functional scope.
 
 ## Verification
 
 - [x] Full desktop CMake build.
 - [x] All five CTest suites.
 - [x] `opencaddie_qmllint`.
-- [x] Dark English/metric capture at 100% text scale.
-- [x] Light Norwegian/metric capture at 150% text scale.
-- [x] Same-input visual comparison at normalized 800 x 480.
+- [x] Direct entry, keyboard Done, ±, blank restoration, metric/imperial lower and upper clamping, and draft-only persistence.
+- [x] Active save/restore, Details, More, remove confirmation, live drag reflow/boundaries, and unsaved-change guard.
+- [x] Quick-editor and details-sheet carry fields remain visible with the numeric keyboard open.
+- [x] Empty, inactive, and 11-club overflow fixtures.
+- [x] Metric and imperial units.
+- [x] Dark English and light Norwegian at 80%, 100%, and 150%.
+- [x] Same-input before/after comparison at normalized 800 x 480.
 
 final result: passed

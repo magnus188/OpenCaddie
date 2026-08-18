@@ -46,6 +46,7 @@ qt_add_qml_module(opencaddie
         qml/Theme.qml
         qml/KeyboardController.qml
         qml/components/AppButton.qml
+        qml/components/AppNumberStepper.qml
         qml/components/AppSelectSheet.qml
         qml/components/AppSlider.qml
         qml/components/AppSwitch.qml
@@ -53,6 +54,7 @@ qt_add_qml_module(opencaddie
         qml/components/BottomNav.qml
         qml/components/BrandLockup.qml
         qml/components/ClubArtwork.qml
+        qml/components/ClubActionsSheet.qml
         qml/components/ClubPickerSheet.qml
         qml/components/ClubDetailsSheet.qml
         qml/components/ConfirmDialog.qml
@@ -97,9 +99,11 @@ qt_add_qml_module(opencaddie
         assets/club-heads/driver.png
         assets/club-heads/hybrid.png
         assets/club-heads/iron.png
+        assets/club-heads/iron-face.png
         assets/club-heads/other.png
         assets/club-heads/putter.png
         assets/club-heads/wedge.png
+        assets/club-heads/wedge-face.png
         assets/club-heads/wood.png
         assets/clubs/bag.png
         assets/clubs/driver.png

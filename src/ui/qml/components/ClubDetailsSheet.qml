@@ -259,7 +259,7 @@ Popup {
                     anchors.right: recommendationSwitch.left
                     anchors.rightMargin: 6
                     anchors.verticalCenter: recommendationSwitch.verticalCenter
-                    text: qsTr("Recommendations")
+                    text: qsTr("Active")
                     color: Theme.text
                     font.family: "Inter"
                     font.weight: Font.DemiBold
@@ -270,7 +270,7 @@ Popup {
                     id: recommendationSwitch
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    accessibleName: qsTr("Use for recommendations")
+                    accessibleName: qsTr("Active")
                 }
             }
 

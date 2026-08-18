@@ -2,6 +2,24 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en">
 <context>
+    <name>AppNumberStepper</name>
+    <message>
+        <location filename="../qml/components/AppNumberStepper.qml" line="11"/>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/components/AppNumberStepper.qml" line="73"/>
+        <source>Decrease carry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/components/AppNumberStepper.qml" line="121"/>
+        <source>Increase carry</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AppSlider</name>
     <message>
         <location filename="../qml/components/AppSlider.qml" line="29"/>
@@ -17,189 +35,166 @@
 <context>
     <name>BagScreen</name>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="182"/>
+        <location filename="../qml/screens/BagScreen.qml" line="279"/>
         <source>My bag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="185"/>
-        <location filename="../qml/screens/BagScreen.qml" line="738"/>
+        <location filename="../qml/screens/BagScreen.qml" line="282"/>
+        <location filename="../qml/screens/BagScreen.qml" line="878"/>
         <source>Add club</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="542"/>
-        <location filename="../qml/screens/BagScreen.qml" line="551"/>
-        <source>Use for recommendations</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="35"/>
+        <location filename="../qml/screens/BagScreen.qml" line="42"/>
         <source>Driver</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="36"/>
+        <location filename="../qml/screens/BagScreen.qml" line="43"/>
         <source>Fairway wood</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="37"/>
+        <location filename="../qml/screens/BagScreen.qml" line="44"/>
         <source>Hybrid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="38"/>
+        <location filename="../qml/screens/BagScreen.qml" line="45"/>
         <source>Iron</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="39"/>
+        <location filename="../qml/screens/BagScreen.qml" line="46"/>
         <source>Wedge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="40"/>
+        <location filename="../qml/screens/BagScreen.qml" line="47"/>
         <source>Putter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="41"/>
+        <location filename="../qml/screens/BagScreen.qml" line="48"/>
         <source>Other</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="317"/>
-        <source>Off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="361"/>
+        <location filename="../qml/screens/BagScreen.qml" line="566"/>
         <source>Your club rack is empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="370"/>
+        <location filename="../qml/screens/BagScreen.qml" line="575"/>
         <source>Add a club to start building your bag.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="429"/>
-        <location filename="../qml/screens/BagScreen.qml" line="512"/>
+        <location filename="../qml/screens/BagScreen.qml" line="695"/>
         <source>m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="429"/>
-        <location filename="../qml/screens/BagScreen.qml" line="512"/>
+        <location filename="../qml/screens/BagScreen.qml" line="695"/>
         <source>yd</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="467"/>
-        <source>Recommended</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="468"/>
-        <source>Not recommended</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="502"/>
+        <location filename="../qml/screens/BagScreen.qml" line="679"/>
+        <location filename="../qml/screens/BagScreen.qml" line="696"/>
         <source>Carry distance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="562"/>
-        <source>Fine tune in 1-unit steps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="583"/>
-        <location filename="../qml/screens/BagScreen.qml" line="678"/>
+        <location filename="../qml/screens/BagScreen.qml" line="807"/>
         <source>Reorder bag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="594"/>
-        <source>Move the selected club along the rack.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="608"/>
-        <source>Move left</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="617"/>
-        <source>Move right</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="639"/>
+        <location filename="../qml/screens/BagScreen.qml" line="753"/>
         <source>Save changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="652"/>
-        <source>Details</source>
+        <location filename="../qml/screens/BagScreen.qml" line="426"/>
+        <source>Inactive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="654"/>
-        <source>Edit details</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="667"/>
-        <location filename="../qml/screens/BagScreen.qml" line="767"/>
-        <source>Remove</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="669"/>
-        <source>Remove club</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="700"/>
-        <source>Done reordering</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="711"/>
-        <source>Position %1 of %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="721"/>
         <location filename="../qml/screens/BagScreen.qml" line="729"/>
-        <source>Ready for your first club?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="749"/>
-        <source>Discard changes?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="750"/>
-        <source>Your unsaved carry and recommendation changes will be lost.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/screens/BagScreen.qml" line="751"/>
-        <source>Discard</source>
+        <source>Active</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/screens/BagScreen.qml" line="764"/>
-        <source>Remove club?</source>
+        <source>Details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/BagScreen.qml" line="765"/>
-        <source>The club will no longer be available for recommendations.</source>
+        <location filename="../qml/screens/BagScreen.qml" line="766"/>
+        <source>Edit details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="781"/>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="835"/>
+        <source>Release to place the club.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="836"/>
+        <source>Long-press a club, then drag it to a new position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="852"/>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="896"/>
+        <source>Your unsaved club changes will be lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="911"/>
+        <source>This permanently removes the club from your bag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="913"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="818"/>
+        <source>Position %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="869"/>
+        <source>Ready for your first club?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="895"/>
+        <source>Discard changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="897"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/screens/BagScreen.qml" line="910"/>
+        <source>Remove club?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -223,6 +218,24 @@
     <message>
         <location filename="../qml/components/BottomNav.qml" line="92"/>
         <source>Next hole</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClubActionsSheet</name>
+    <message>
+        <location filename="../qml/components/ClubActionsSheet.qml" line="72"/>
+        <source>Club actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubActionsSheet.qml" line="83"/>
+        <source>Reorder bag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/components/ClubActionsSheet.qml" line="95"/>
+        <source>Remove club</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -306,12 +319,8 @@
     </message>
     <message>
         <location filename="../qml/components/ClubDetailsSheet.qml" line="262"/>
-        <source>Recommendations</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../qml/components/ClubDetailsSheet.qml" line="273"/>
-        <source>Use for recommendations</source>
+        <source>Active</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1882,42 +1891,42 @@
 <context>
     <name>WelcomeScreen</name>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="89"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="85"/>
         <source>Stats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="90"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="86"/>
         <source>My clubs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="74"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="70"/>
         <source>%1 · Hole %2 of %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="62"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="58"/>
         <source>Play golf</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="62"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="58"/>
         <source>Resume round</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="87"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="83"/>
         <source>Course analyzer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="88"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="84"/>
         <source>History</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/screens/WelcomeScreen.qml" line="91"/>
+        <location filename="../qml/screens/WelcomeScreen.qml" line="87"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>

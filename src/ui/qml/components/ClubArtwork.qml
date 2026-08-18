@@ -12,11 +12,15 @@ Item {
     readonly property string normalizedType:
         ["driver", "wood", "hybrid", "iron", "wedge", "putter", "other"]
             .indexOf(clubType) >= 0 ? clubType : "other"
+    readonly property string assetName:
+        normalizedType === "iron" ? "iron-face"
+        : normalizedType === "wedge" ? "wedge-face"
+        : normalizedType
 
     Image {
         id: image
         anchors.fill: parent
-        source: "../../assets/club-heads/" + artwork.normalizedType + ".png"
+        source: "../../assets/club-heads/" + artwork.assetName + ".png"
         sourceSize.width: 512
         sourceSize.height: 512
         fillMode: Image.PreserveAspectFit

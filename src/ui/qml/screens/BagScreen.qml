@@ -17,6 +17,12 @@ Item {
     property string baselineType: "other"
     property bool baselineEnabled: true
     property bool reorderMode: false
+    property string draggingId: ""
+    property int dragStartIndex: -1
+    property int dragTargetIndex: -1
+    property real dragPressOffsetX: 0
+    property real dragPointerViewportX: 0
+    property real dragOffsetX: 0
     property string pendingAction: ""
     property int pendingIndex: -1
     property int selectionAfterReloadIndex: -1
@@ -29,6 +35,14 @@ Item {
                          Math.round(draftCarry) !== Math.round(baselineCarry) ||
                          draftType !== baselineType ||
                          draftEnabled !== baselineEnabled)
+    readonly property bool dragging: draggingId.length > 0
+    readonly property real carryKeyboardLift:
+        carryStepper.keyboardActive
+        ? Math.max(0,
+                   quickEditor.y + editorTopRow.y + carryStepper.y +
+                   carryStepper.height + 12 -
+                   (root.height - KeyboardController.keyboardHeight))
+        : 0
 
     function clubTypeLabel(type) {
         switch (type) {
@@ -50,7 +64,32 @@ Item {
         return -1
     }
 
+    function syncRackModel() {
+        rackVisualModel.clear()
+        for (var i = 0; i < app.clubs.length; ++i) {
+            const club = app.clubs[i]
+            rackVisualModel.append({
+                "clubId": String(club.id),
+                "clubName": String(club.name),
+                "clubCarry": Number(club.carry),
+                "clubUnit": String(club.unit),
+                "clubType": String(club.type || "other"),
+                "clubEnabled": Boolean(club.enabled)
+            })
+        }
+    }
+
+    function resetDragState() {
+        draggingId = ""
+        dragStartIndex = -1
+        dragTargetIndex = -1
+        dragPressOffsetX = 0
+        dragPointerViewportX = 0
+        dragOffsetX = 0
+    }
+
     function clearSelection() {
+        resetDragState()
         selectedId = ""
         selectedIndex = -1
         draftName = ""
@@ -64,7 +103,7 @@ Item {
         reorderMode = false
     }
 
-    function loadClub(index) {
+    function loadClub(index, positionView) {
         if (index < 0 || index >= app.clubs.length) {
             clearSelection()
             return
@@ -80,10 +119,12 @@ Item {
         baselineCarry = draftCarry
         baselineType = draftType
         baselineEnabled = draftEnabled
-        Qt.callLater(function() {
-            if (index >= 0 && index < app.clubs.length)
-                clubRack.positionViewAtIndex(index, ListView.Contain)
-        })
+        if (positionView !== false) {
+            Qt.callLater(function() {
+                if (index >= 0 && index < app.clubs.length)
+                    clubRack.positionViewAtIndex(index, ListView.Contain)
+            })
+        }
     }
 
     function resetDraft() {
@@ -144,22 +185,79 @@ Item {
                        draftType, draftEnabled)
     }
 
-    function moveSelected(delta) {
-        if (!hasSelection)
+    function beginClubDrag(clubId, visualIndex, pressOffsetX,
+                           pointerViewportX) {
+        const appIndex = findClubIndex(clubId)
+        if (appIndex < 0 || visualIndex < 0 ||
+                visualIndex >= rackVisualModel.count)
+            return false
+        if (draftDirty) {
+            requestAction("reorder", -1)
+            return false
+        }
+        if (selectedIndex !== appIndex)
+            loadClub(appIndex, false)
+        reorderMode = true
+        draggingId = clubId
+        dragStartIndex = visualIndex
+        dragTargetIndex = visualIndex
+        dragPressOffsetX = pressOffsetX
+        dragPointerViewportX = pointerViewportX
+        dragOffsetX = 0
+        return true
+    }
+
+    function updateDragGeometry() {
+        if (!dragging)
             return
-        const target = selectedIndex + delta
-        if (target < 0 || target >= app.clubs.length)
+        const contentPointerX = clubRack.contentX + dragPointerViewportX
+        const span = 112 + clubRack.spacing
+        const candidate = Math.max(0, Math.min(
+            rackVisualModel.count - 1,
+            Math.round((contentPointerX - dragPressOffsetX) / span)))
+        if (candidate !== dragTargetIndex) {
+            rackVisualModel.move(dragTargetIndex, candidate, 1)
+            dragTargetIndex = candidate
+        }
+        dragOffsetX = contentPointerX - dragPressOffsetX -
+                      dragTargetIndex * span
+    }
+
+    function updateClubDrag(pointerViewportX) {
+        if (!dragging)
             return
+        dragPointerViewportX = Math.max(
+            0, Math.min(clubRack.width, pointerViewportX))
+        updateDragGeometry()
+    }
+
+    function cancelClubDrag() {
+        resetDragState()
+        syncRackModel()
+    }
+
+    function finishClubDrag() {
+        if (!dragging)
+            return
+        const target = dragTargetIndex
         var ids = []
-        for (var i = 0; i < app.clubs.length; ++i)
-            ids.push(app.clubs[i].id)
-        const moved = ids.splice(selectedIndex, 1)[0]
-        ids.splice(target, 0, moved)
+        for (var i = 0; i < rackVisualModel.count; ++i)
+            ids.push(rackVisualModel.get(i).clubId)
+        const orderChanged = target !== dragStartIndex
+        resetDragState()
+        if (!orderChanged)
+            return
         selectionAfterReloadIndex = target
         app.reorderClubs(ids)
     }
 
+    function leaveReorderMode() {
+        cancelClubDrag()
+        reorderMode = false
+    }
+
     Component.onCompleted: Qt.callLater(function() {
+        root.syncRackModel()
         root.syncSelection()
         if (screenshotMode && app.clubs.length > 2)
             root.loadClub(2)
@@ -168,8 +266,14 @@ Item {
     Connections {
         target: app
         function onClubsChanged() {
+            root.resetDragState()
+            root.syncRackModel()
             Qt.callLater(root.syncSelection)
         }
+    }
+
+    ListModel {
+        id: rackVisualModel
     }
 
     TopBar {
@@ -205,145 +309,256 @@ Item {
             color: Theme.divider
         }
 
-        Item {
-            id: bagSlot
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 112
-
-            Image {
-                anchors.left: parent.left
-                anchors.leftMargin: 4
-                anchors.top: parent.top
-                anchors.topMargin: 8
-                width: 108
-                height: 184
-                source: "../../assets/club-heads/bag-rack.png"
-                sourceSize.width: 512
-                sourceSize.height: 512
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 16
-                width: 1
-                color: Theme.border
-            }
-        }
-
         ListView {
             id: clubRack
-            anchors.left: bagSlot.right
+            anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.rightMargin: 4
             orientation: ListView.Horizontal
-            model: app.clubs
+            model: rackVisualModel
             clip: true
+            interactive: !root.dragging
             boundsBehavior: Flickable.StopAtBounds
             flickDeceleration: 2200
             maximumFlickVelocity: 3000
             spacing: 2
             ScrollIndicator.horizontal: ScrollIndicator { }
+            moveDisplaced: Transition {
+                NumberAnimation {
+                    properties: "x,y"
+                    duration: Theme.motion
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             delegate: Item {
                 id: clubDelegate
-                required property var modelData
                 required property int index
+                required property string clubId
+                required property string clubName
+                required property real clubCarry
+                required property string clubUnit
+                required property string clubType
+                required property bool clubEnabled
+                property bool holdActivated: false
                 width: 112
                 height: clubRack.height
-                opacity: modelData.enabled ? 1 : 0.68
+                opacity: root.draggingId === clubId
+                         ? 1 : clubEnabled ? 1 : 0.68
+                z: root.draggingId === clubId ? 100 : 0
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    radius: 12
-                    color: root.selectedId === modelData.id
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.075)
-                           : clubTap.pressed ? Theme.controlPressed
-                                             : "transparent"
+                Item {
+                    id: dragVisual
+                    width: parent.width
+                    height: parent.height
+                    x: root.draggingId === clubDelegate.clubId
+                       ? root.dragOffsetX : 0
+                    y: root.draggingId === clubDelegate.clubId ? -4 : 0
+                    scale: root.draggingId === clubDelegate.clubId
+                           ? 1.08 : 1
+                    transformOrigin: Item.Center
 
-                    Behavior on color {
-                        ColorAnimation { duration: Theme.motionFast }
-                    }
-                }
-
-                ClubArtwork {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 5
-                    width: 96
-                    height: 135
-                    clubType: clubDelegate.modelData.type
-                    selected: root.selectedId === clubDelegate.modelData.id
-                    clubEnabled: clubDelegate.modelData.enabled
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 140
-                    anchors.leftMargin: 5
-                    anchors.rightMargin: 5
-                    text: modelData.name
-                    color: root.selectedId === modelData.id
-                           ? Theme.fairway
-                           : modelData.enabled ? Theme.text : Theme.textMuted
-                    font.family: "Inter"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: Theme.px(12)
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 163
-                    anchors.leftMargin: 5
-                    anchors.rightMargin: 5
-                    text: modelData.enabled
-                          ? Math.round(modelData.carry) + " " + modelData.unit
-                          : qsTr("Off")
-                    color: modelData.enabled ? Theme.textMuted : Theme.amber
-                    font.family: "Inter"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: Theme.px(11)
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    height: root.selectedId === modelData.id ? 4 : 0
-                    radius: 2
-                    color: Theme.fairway
-
-                    Behavior on height {
+                    Behavior on scale {
                         NumberAnimation {
                             duration: Theme.motionFast
                             easing.type: Easing.OutCubic
                         }
                     }
+
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: Theme.motionFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Rectangle {
+                        x: -5
+                        y: 7
+                        width: parent.width + 10
+                        height: parent.height
+                        radius: 16
+                        color: Qt.rgba(0, 0, 0, 0.38)
+                        visible: root.draggingId === clubDelegate.clubId
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        radius: 12
+                        color: root.selectedId === clubDelegate.clubId
+                               ? Qt.rgba(0.18, 0.80, 0.39, 0.075)
+                               : clubPointer.pressed
+                                 ? Theme.controlPressed : "transparent"
+                        border.width:
+                            root.draggingId === clubDelegate.clubId ? 2 : 0
+                        border.color: Theme.fairway
+
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.motionFast }
+                        }
+                    }
+
+                    ClubArtwork {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        anchors.topMargin: 5
+                        width: 96
+                        height: 135
+                        clubType: clubDelegate.clubType
+                        selected: root.selectedId === clubDelegate.clubId
+                        clubEnabled: clubDelegate.clubEnabled
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: 140
+                        anchors.leftMargin: 5
+                        anchors.rightMargin: 5
+                        text: clubDelegate.clubName
+                        color: root.selectedId === clubDelegate.clubId
+                               ? Theme.fairway
+                               : clubDelegate.clubEnabled
+                                 ? Theme.text : Theme.textMuted
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(12)
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: 163
+                        anchors.leftMargin: 5
+                        anchors.rightMargin: 5
+                        text: clubDelegate.clubEnabled
+                              ? Math.round(clubDelegate.clubCarry) +
+                                " " + clubDelegate.clubUnit
+                              : qsTr("Inactive")
+                        color: clubDelegate.clubEnabled
+                               ? Theme.textMuted : Theme.amber
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(11)
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        height: root.selectedId === clubDelegate.clubId
+                                ? 4 : 0
+                        radius: 2
+                        color: Theme.fairway
+
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Theme.motionFast
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
                 }
 
-                TapHandler {
-                    id: clubTap
-                    onTapped: root.requestAction("select", clubDelegate.index)
+                MouseArea {
+                    id: clubPointer
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton
+                    preventStealing:
+                        root.draggingId === clubDelegate.clubId
+                    pressAndHoldInterval: 500
+
+                    onPressed: function(mouse) {
+                        clubDelegate.holdActivated = false
+                    }
+                    onPressAndHold: function(mouse) {
+                        if (root.dragging)
+                            return
+                        const point = clubDelegate.mapToItem(
+                            clubRack, mouse.x, mouse.y)
+                        clubDelegate.holdActivated = root.beginClubDrag(
+                            clubDelegate.clubId, clubDelegate.index,
+                            mouse.x, point.x)
+                    }
+                    onPositionChanged: function(mouse) {
+                        if (root.draggingId !== clubDelegate.clubId)
+                            return
+                        const point = clubDelegate.mapToItem(
+                            clubRack, mouse.x, mouse.y)
+                        root.updateClubDrag(point.x)
+                    }
+                    onReleased: function(mouse) {
+                        if (root.draggingId !== clubDelegate.clubId)
+                            return
+                        const point = clubDelegate.mapToItem(
+                            clubRack, mouse.x, mouse.y)
+                        root.updateClubDrag(point.x)
+                        root.finishClubDrag()
+                    }
+                    onCanceled: {
+                        if (root.draggingId === clubDelegate.clubId)
+                            root.cancelClubDrag()
+                    }
+                    onClicked: {
+                        if (!clubDelegate.holdActivated) {
+                            root.requestAction(
+                                "select",
+                                root.findClubIndex(clubDelegate.clubId))
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                x: root.dragTargetIndex * (112 + clubRack.spacing) + 4
+                y: 4
+                width: 104
+                height: clubRack.height - 8
+                radius: 12
+                color: "transparent"
+                border.width: 2
+                border.color: Theme.fairway
+                opacity: 0.72
+                visible: root.dragging && root.dragTargetIndex >= 0
+                z: 90
+            }
+
+            Timer {
+                interval: 16
+                repeat: true
+                running: root.dragging
+                onTriggered: {
+                    const edge = 72
+                    var delta = 0
+                    if (root.dragPointerViewportX < edge) {
+                        delta = -Math.ceil(
+                            (edge - root.dragPointerViewportX) / edge * 8)
+                    } else if (root.dragPointerViewportX >
+                               clubRack.width - edge) {
+                        delta = Math.ceil(
+                            (root.dragPointerViewportX -
+                             (clubRack.width - edge)) / edge * 8)
+                    }
+                    if (delta === 0)
+                        return
+                    const maximum = Math.max(
+                        0, clubRack.contentWidth - clubRack.width)
+                    const next = Math.max(
+                        0, Math.min(maximum, clubRack.contentX + delta))
+                    if (next !== clubRack.contentX) {
+                        clubRack.contentX = next
+                        root.updateDragGeometry()
+                    }
                 }
             }
 
@@ -386,269 +601,176 @@ Item {
         anchors.top: rackPanel.bottom
         anchors.bottom: parent.bottom
         color: Theme.surface
+        z: carryStepper.keyboardActive ? 5 : 0
+        transform: Translate {
+            y: -root.carryKeyboardLift
+
+            Behavior on y {
+                NumberAnimation {
+                    duration: Theme.motion
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
 
         Item {
             anchors.fill: parent
             visible: root.hasSelection
 
             Item {
-                id: clubSummary
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 18
-                width: 154
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 15
-                    text: root.draftName
-                    color: Theme.text
-                    font.family: "Inter"
-                    font.weight: Font.Bold
-                    font.pixelSize: Theme.px(21)
-                    elide: Text.ElideRight
-                }
-
-                Row {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.topMargin: 49
-                    spacing: 5
-                    Text {
-                        text: Math.round(root.draftCarry)
-                        color: Theme.fairway
-                        font.family: "Inter"
-                        font.weight: Font.Bold
-                        font.pixelSize: Theme.px(30)
-                    }
-                    Text {
-                        anchors.baseline: parent.children[0].baseline
-                        text: app.metric ? qsTr("m") : qsTr("yd")
-                        color: Theme.textMuted
-                        font.family: "Inter"
-                        font.weight: Font.DemiBold
-                        font.pixelSize: Theme.px(13)
-                    }
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 94
-                    text: root.clubTypeLabel(root.draftType)
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.weight: Font.DemiBold
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: 0.8
-                    font.pixelSize: Theme.px(10)
-                    elide: Text.ElideRight
-                }
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.topMargin: 121
-                    width: statusLabel.implicitWidth + 18
-                    height: 27
-                    radius: 14
-                    color: root.draftEnabled
-                           ? Qt.rgba(0.18, 0.80, 0.39, 0.13)
-                           : Qt.rgba(0.83, 0.54, 0.21, 0.13)
-                    border.width: 1
-                    border.color: root.draftEnabled ? Theme.greenDeep : Theme.amber
-                    Text {
-                        id: statusLabel
-                        anchors.centerIn: parent
-                        text: root.draftEnabled ? qsTr("Recommended")
-                                                : qsTr("Not recommended")
-                        color: root.draftEnabled ? Theme.fairway : Theme.amber
-                        font.family: "Inter"
-                        font.weight: Font.DemiBold
-                        font.pixelSize: Theme.px(10)
-                    }
-                }
-            }
-
-            Rectangle {
-                anchors.left: clubSummary.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.topMargin: 16
-                anchors.bottomMargin: 16
-                width: 1
-                color: Theme.divider
-            }
-
-            Item {
-                id: carryEditor
-                anchors.left: clubSummary.right
-                anchors.leftMargin: 16
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 326
+                id: normalEditor
+                anchors.fill: parent
                 visible: !root.reorderMode
 
-                Row {
+                Item {
+                    id: editorTopRow
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.topMargin: 13
-                    Text {
-                        text: qsTr("Carry distance")
-                        color: Theme.text
-                        font.family: "Inter"
-                        font.weight: Font.DemiBold
-                        font.pixelSize: Theme.px(13)
-                    }
-                    Text {
-                        anchors.baseline: parent.children[0].baseline
-                        width: parent.width - parent.children[0].implicitWidth
-                        text: Math.round(root.draftCarry) + " " +
-                              (app.metric ? qsTr("m") : qsTr("yd"))
-                        color: Theme.fairway
-                        font.family: "Inter"
-                        font.weight: Font.Bold
-                        font.pixelSize: Theme.px(13)
-                        horizontalAlignment: Text.AlignRight
+                    anchors.bottom: normalActionRow.top
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    anchors.topMargin: 8
+                    anchors.bottomMargin: 8
+
+                    Row {
+                        id: editorTopContent
+                        anchors.fill: parent
+                        spacing: 12
+
+                        Item {
+                            width: 184
+                            height: parent.height
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.topMargin: 10
+                                text: root.draftName
+                                color: Theme.text
+                                font.family: "Inter"
+                                font.weight: Font.Bold
+                                font.pixelSize: Theme.px(21)
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.topMargin: 52
+                                text: root.clubTypeLabel(root.draftType)
+                                color: Theme.textMuted
+                                font.family: "Inter"
+                                font.weight: Font.DemiBold
+                                font.capitalization: Font.AllUppercase
+                                font.letterSpacing: 0.8
+                                font.pixelSize: Theme.px(10)
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 1
+                            height: 64
+                            color: Theme.divider
+                        }
+
+                        Item {
+                            width: 320
+                            height: parent.height
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.topMargin: 2
+                                text: qsTr("Carry distance")
+                                color: Theme.textMuted
+                                font.family: "Inter"
+                                font.weight: Font.DemiBold
+                                font.pixelSize: Theme.px(11)
+                            }
+
+                            AppNumberStepper {
+                                id: carryStepper
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.topMargin: 26
+                                value: Math.round(root.draftCarry)
+                                from: 1
+                                to: app.metric ? 350 : 400
+                                unit: app.metric ? qsTr("m") : qsTr("yd")
+                                accessibleName: qsTr("Carry distance")
+                                onValueEdited: function(newValue) {
+                                    root.draftCarry = newValue
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 1
+                            height: 64
+                            color: Theme.divider
+                        }
+
+                        Item {
+                            width: editorTopContent.width - 506 -
+                                   editorTopContent.spacing * 4
+                            height: parent.height
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 14
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("Active")
+                                    color: Theme.text
+                                    font.family: "Inter"
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: Theme.px(16)
+                                }
+
+                                AppSwitch {
+                                    accessibleName: qsTr("Active")
+                                    checked: root.draftEnabled
+                                    onToggled: root.draftEnabled = checked
+                                }
+                            }
+                        }
                     }
                 }
 
-                AppSlider {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 35
-                    from: 1
-                    to: app.metric ? 350 : 400
-                    stepSize: 1
-                    value: root.draftCarry
-                    onMoved: root.draftCarry = Math.round(value)
-                }
-
                 Row {
+                    id: normalActionRow
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 91
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    anchors.bottomMargin: 12
                     height: Theme.touch
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - recommendationSwitch.width
-                        text: qsTr("Use for recommendations")
-                        color: Theme.text
-                        font.family: "Inter"
-                        font.weight: Font.DemiBold
-                        font.pixelSize: Theme.px(13)
-                        elide: Text.ElideRight
-                    }
-                    AppSwitch {
-                        id: recommendationSwitch
-                        accessibleName: qsTr("Use for recommendations")
-                        checked: root.draftEnabled
-                        onToggled: root.draftEnabled = checked
-                    }
-                }
+                    spacing: 12
+                    property real unitWidth: (width - spacing * 2) / 4
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 145
-                    text: qsTr("Fine tune in 1-unit steps")
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(10)
-                    elide: Text.ElideRight
-                }
-            }
-
-            Item {
-                anchors.left: clubSummary.right
-                anchors.leftMargin: 16
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 326
-                visible: root.reorderMode
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 16
-                    text: qsTr("Reorder bag")
-                    color: Theme.text
-                    font.family: "Inter"
-                    font.weight: Font.Bold
-                    font.pixelSize: Theme.px(17)
-                }
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 45
-                    text: qsTr("Move the selected club along the rack.")
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(11)
-                    elide: Text.ElideRight
-                }
-                Row {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 78
-                    spacing: 10
                     AppButton {
-                        width: (parent.width - 10) / 2
-                        text: qsTr("Move left")
-                        iconSource: "../../assets/icons/lucide/chevron-left.svg"
-                        variant: "surface"
+                        width: parent.unitWidth * 2
+                        height: parent.height
+                        text: qsTr("Save changes")
+                        iconSource: "../../assets/icons/lucide/check.svg"
+                        variant: "primary"
                         compact: true
-                        enabled: root.selectedIndex > 0
-                        onClicked: root.moveSelected(-1)
+                        enabled: root.draftDirty
+                        onClicked: root.saveQuickDraft()
                     }
+
                     AppButton {
-                        width: (parent.width - 10) / 2
-                        text: qsTr("Move right")
-                        iconSource: "../../assets/icons/lucide/chevron-right.svg"
-                        variant: "surface"
-                        compact: true
-                        enabled: root.selectedIndex < app.clubs.length - 1
-                        onClicked: root.moveSelected(1)
-                    }
-                }
-            }
-
-            Column {
-                anchors.left: carryEditor.right
-                anchors.leftMargin: 16
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.top: parent.top
-                anchors.topMargin: 11
-                spacing: 8
-                visible: !root.reorderMode
-
-                AppButton {
-                    width: parent.width
-                    text: qsTr("Save changes")
-                    iconSource: "../../assets/icons/lucide/check.svg"
-                    variant: "primary"
-                    compact: true
-                    enabled: root.draftDirty
-                    onClicked: root.saveQuickDraft()
-                }
-
-                Row {
-                    width: parent.width
-                    spacing: 8
-                    AppButton {
-                        width: (parent.width - 8) / 2
+                        width: parent.unitWidth
+                        height: parent.height
                         text: qsTr("Details")
                         iconSource: "../../assets/icons/lucide/menu.svg"
                         accessibleName: qsTr("Edit details")
@@ -662,59 +784,87 @@ Item {
                             "enabled": root.draftEnabled
                         })
                     }
-                    AppButton {
-                        width: (parent.width - 8) / 2
-                        text: qsTr("Remove")
-                        iconSource: "../../assets/icons/lucide/trash-2.svg"
-                        accessibleName: qsTr("Remove club")
-                        variant: "danger"
-                        compact: true
-                        onClicked: removeDialog.open()
-                    }
-                }
 
-                AppButton {
-                    width: parent.width
-                    text: qsTr("Reorder bag")
-                    iconSource: "../../assets/icons/lucide/menu.svg"
-                    variant: "surface"
-                    compact: true
-                    onClicked: root.requestAction("reorder", -1)
+                    AppButton {
+                        width: parent.unitWidth
+                        height: parent.height
+                        text: qsTr("More")
+                        variant: "surface"
+                        compact: true
+                        onClicked: clubActionsSheet.open()
+                    }
                 }
             }
 
             Item {
-                anchors.left: carryEditor.right
-                anchors.leftMargin: 16
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
+                id: reorderEditor
+                anchors.fill: parent
                 visible: root.reorderMode
 
-                AppButton {
+                Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.topMargin: 18
-                    text: qsTr("Done reordering")
+                    anchors.bottom: reorderDoneButton.top
+                    anchors.leftMargin: 20
+                    anchors.rightMargin: 20
+                    anchors.topMargin: 12
+                    anchors.bottomMargin: 8
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        text: qsTr("Reorder bag")
+                        color: Theme.text
+                        font.family: "Inter"
+                        font.weight: Font.Bold
+                        font.pixelSize: Theme.px(19)
+                    }
+
+                    Text {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: 3
+                        text: qsTr("Position %1 of %2")
+                                  .arg((root.dragging
+                                        ? root.dragTargetIndex
+                                        : root.selectedIndex) + 1)
+                                  .arg(app.clubs.length)
+                        color: Theme.fairway
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.px(13)
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: 39
+                        text: root.dragging
+                              ? qsTr("Release to place the club.")
+                              : qsTr("Long-press a club, then drag it to a new position.")
+                        color: Theme.textMuted
+                        font.family: "Inter"
+                        font.pixelSize: Theme.px(11)
+                        elide: Text.ElideRight
+                    }
+                }
+
+                AppButton {
+                    id: reorderDoneButton
+                    width: 188
+                    height: Theme.touch
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.bottomMargin: 12
+                    text: qsTr("Done")
                     iconSource: "../../assets/icons/lucide/check.svg"
                     variant: "primary"
                     compact: true
-                    onClicked: root.reorderMode = false
-                }
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 80
-                    text: qsTr("Position %1 of %2")
-                              .arg(root.selectedIndex + 1).arg(app.clubs.length)
-                    color: Theme.textMuted
-                    font.family: "Inter"
-                    font.pixelSize: Theme.px(12)
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap
+                    enabled: !root.dragging
+                    onClicked: root.leaveReorderMode()
                 }
             }
         }
@@ -744,10 +894,16 @@ Item {
         }
     }
 
+    ClubActionsSheet {
+        id: clubActionsSheet
+        onReorderRequested: root.requestAction("reorder", -1)
+        onRemoveRequested: removeDialog.open()
+    }
+
     ConfirmDialog {
         id: unsavedDialog
         title: qsTr("Discard changes?")
-        bodyText: qsTr("Your unsaved carry and recommendation changes will be lost.")
+        bodyText: qsTr("Your unsaved club changes will be lost.")
         confirmText: qsTr("Discard")
         onConfirmed: {
             root.resetDraft()
@@ -762,7 +918,7 @@ Item {
     ConfirmDialog {
         id: removeDialog
         title: qsTr("Remove club?")
-        bodyText: qsTr("The club will no longer be available for recommendations.")
+        bodyText: qsTr("This permanently removes the club from your bag.")
         destructive: true
         confirmText: qsTr("Remove")
         onConfirmed: {
